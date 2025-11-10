@@ -14,12 +14,12 @@ final class RemoteClient {
     required String accessKey,
     required String secretKey,
     required String bucket,
-  })  : _minio = Minio(
-          endPoint: endpoint,
-          accessKey: accessKey,
-          secretKey: secretKey,
-        ),
-        _bucket = bucket;
+  }) : _minio = Minio(
+         endPoint: endpoint,
+         accessKey: accessKey,
+         secretKey: secretKey,
+       ),
+       _bucket = bucket;
 
   static String _readEnv(DotEnv env, String key) {
     final value = env[key];
@@ -51,10 +51,7 @@ final class RemoteClient {
 
   Stream<String> listObjects() async* {
     final prefix = '$_objectPrefix/';
-    await for (final objects in _minio.listObjects(
-      _bucket,
-      prefix: prefix,
-    )) {
+    await for (final objects in _minio.listObjects(_bucket, prefix: prefix)) {
       for (final object in objects.objects) {
         yield object.key!.substring(prefix.length);
       }

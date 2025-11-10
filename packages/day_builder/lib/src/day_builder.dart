@@ -12,10 +12,7 @@ final class Supertypes {
   final InterfaceType intPart;
   final InterfaceType stringPart;
 
-  Supertypes({
-    required this.intPart,
-    required this.stringPart,
-  });
+  Supertypes({required this.intPart, required this.stringPart});
 }
 
 final class DayBuilder implements Builder {
@@ -25,7 +22,7 @@ final class DayBuilder implements Builder {
 
   @override
   final Map<String, List<String>> buildExtensions = const {
-    '.placeholder': ['.g.dart']
+    '.placeholder': ['.g.dart'],
   };
 
   Future<Supertypes> _loadSupertypes(Resolver resolver) async {
@@ -161,12 +158,13 @@ final class DayBuilder implements Builder {
       buffer.writeln('),');
     }
     buffer.writeln(
-        "final i => throw ArgumentError.value(day, 'day', 'day \$i not implemented'),");
+      "final i => throw ArgumentError.value(day, 'day', 'day \$i not implemented'),",
+    );
     buffer.writeln('};');
     buffer.writeln('}');
 
     final formatter = DartFormatter(
-      languageVersion: Version.parse(Platform.version.split(' ').first)
+      languageVersion: Version.parse(Platform.version.split(' ').first),
     );
     return formatter.format(buffer.toString());
   }
@@ -177,11 +175,12 @@ final class DayBuilder implements Builder {
     final dayDeclarations = <DayDeclaration>[];
 
     final pathSegments = buildStep.inputId.pathSegments;
-    final directory =
-        pathSegments.sublist(0, pathSegments.length - 1).join('/');
-    await for (final dayAsset in buildStep.findAssets(Glob(
-      '$directory/days/day_*.dart',
-    ))) {
+    final directory = pathSegments
+        .sublist(0, pathSegments.length - 1)
+        .join('/');
+    await for (final dayAsset in buildStep.findAssets(
+      Glob('$directory/days/day_*.dart'),
+    )) {
       final LibraryElement library;
       try {
         library = await buildStep.resolver.libraryFor(dayAsset);
@@ -192,8 +191,10 @@ final class DayBuilder implements Builder {
         continue;
       }
 
-      final dayString =
-          dayAsset.pathSegments.last.split('.')[0].split('_').last;
+      final dayString = dayAsset.pathSegments.last
+          .split('.')[0]
+          .split('_')
+          .last;
       final day = int.tryParse(dayString);
       if (day == null) {
         continue;
@@ -205,11 +206,9 @@ final class DayBuilder implements Builder {
       );
 
       if (partDeclarations.isNotEmpty) {
-        dayDeclarations.add(DayDeclaration(
-          assetId: dayAsset,
-          day: day,
-          parts: partDeclarations,
-        ));
+        dayDeclarations.add(
+          DayDeclaration(assetId: dayAsset, day: day, parts: partDeclarations),
+        );
       }
     }
 
@@ -217,13 +216,12 @@ final class DayBuilder implements Builder {
 
     final inputLib = await buildStep.inputLibrary;
     final target = buildStep.inputId.changeExtension('.g.dart');
-    unawaited(buildStep.writeAsString(
-      target,
-      _createContents(
-        inputLib.source.shortName,
-        dayDeclarations,
+    unawaited(
+      buildStep.writeAsString(
+        target,
+        _createContents(inputLib.source.shortName, dayDeclarations),
       ),
-    ));
+    );
   }
 }
 
@@ -259,11 +257,7 @@ final class DayDeclaration {
       );
     }
 
-    return DayDeclaration._(
-      day: day,
-      parts: parts,
-      assetId: assetId,
-    );
+    return DayDeclaration._(day: day, parts: parts, assetId: assetId);
   }
 }
 
