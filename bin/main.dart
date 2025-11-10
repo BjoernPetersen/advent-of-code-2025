@@ -19,11 +19,7 @@ Future<void> main(List<String> args) async {
     allowed: ['1', '2'],
     help: 'Which part of the day to compute (default: both)',
   );
-  parser.addOption(
-    'input',
-    abbr: 'i',
-    help: 'The path to a custom input txt',
-  );
+  parser.addOption('input', abbr: 'i', help: 'The path to a custom input txt');
 
   final argResult = parser.parse(args);
   final InputReader inputReader;

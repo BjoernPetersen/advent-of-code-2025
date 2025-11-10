@@ -10,11 +10,8 @@ final class _RemoteReader implements InputReader {
   final int day;
   final String suffix;
 
-  _RemoteReader(
-    DotEnv env,
-    this.day, {
-    required this.suffix,
-  }) : _client = RemoteClient.fromEnv(env);
+  _RemoteReader(DotEnv env, this.day, {required this.suffix})
+    : _client = RemoteClient.fromEnv(env);
 
   @override
   Stream<String> readLines() async* {
@@ -24,13 +21,5 @@ final class _RemoteReader implements InputReader {
   }
 }
 
-InputReader createReader(
-  DotEnv env,
-  int day, {
-  required String suffix,
-}) =>
-    _RemoteReader(
-      env,
-      day,
-      suffix: suffix,
-    );
+InputReader createReader(DotEnv env, int day, {required String suffix}) =>
+    _RemoteReader(env, day, suffix: suffix);

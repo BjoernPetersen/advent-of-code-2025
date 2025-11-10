@@ -22,10 +22,7 @@ final class Day<A extends Part, B extends Part> {
   final A partOne;
   final B? partTwo;
 
-  const Day(
-    this.partOne, [
-    this.partTwo,
-  ]);
+  const Day(this.partOne, [this.partTwo]);
 }
 
 extension StringResult on Part {

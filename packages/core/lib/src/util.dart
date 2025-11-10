@@ -85,10 +85,7 @@ class Vector {
   final int x;
   final int y;
 
-  const Vector({
-    this.x = 0,
-    this.y = 0,
-  });
+  const Vector({this.x = 0, this.y = 0});
 
   bool get isHorizontal {
     if (x != 0 && y != 0) {
@@ -101,24 +98,15 @@ class Vector {
   bool get isVertical => !isHorizontal;
 
   Vector operator +(Vector other) {
-    return Vector(
-      x: x + other.x,
-      y: y + other.y,
-    );
+    return Vector(x: x + other.x, y: y + other.y);
   }
 
   Vector operator -(Vector other) {
-    return Vector(
-      x: x - other.x,
-      y: y - other.y,
-    );
+    return Vector(x: x - other.x, y: y - other.y);
   }
 
   Vector operator *(int scalar) {
-    return Vector(
-      x: x * scalar,
-      y: y * scalar,
-    );
+    return Vector(x: x * scalar, y: y * scalar);
   }
 
   Vector rotate({bool clockwise = true}) {
@@ -134,17 +122,11 @@ class Vector {
   }
 
   Vector operator %(Bounds bounds) {
-    return Vector(
-      x: x % bounds.width,
-      y: y % bounds.height,
-    );
+    return Vector(x: x % bounds.width, y: y % bounds.height);
   }
 
   Vector abs() {
-    return Vector(
-      x: x.abs(),
-      y: y.abs(),
-    );
+    return Vector(x: x.abs(), y: y.abs());
   }
 
   Vector get sign => Vector(x: x.sign, y: y.sign);
@@ -218,18 +200,10 @@ final class Bounds {
       throw StateError("Even width or height, so there's no middle");
     }
 
-    return Vector(
-      x: width ~/ 2,
-      y: height ~/ 2,
-    );
+    return Vector(x: width ~/ 2, y: height ~/ 2);
   }
 
-  Iterable<Vector> get corners => [
-        topLeft,
-        topRight,
-        bottomLeft,
-        bottomRight,
-      ];
+  Iterable<Vector> get corners => [topLeft, topRight, bottomLeft, bottomRight];
 
   @override
   bool operator ==(Object other) =>
@@ -257,22 +231,22 @@ final class Grid<T> {
   int get height => bounds.height;
 
   Grid(this._grid)
-      : bounds = Bounds(width: _grid[0].length, height: _grid.length);
+    : bounds = Bounds(width: _grid[0].length, height: _grid.length);
 
   Grid.generate({
     required int width,
     required int height,
     required T Function(Vector position) generator,
-  })  : bounds = Bounds(width: width, height: height),
-        _grid = List.generate(
-          height,
-          (y) => List.generate(
-            width,
-            (x) => generator(Vector(x: x, y: y)),
-            growable: false,
-          ),
-          growable: false,
-        );
+  }) : bounds = Bounds(width: width, height: height),
+       _grid = List.generate(
+         height,
+         (y) => List.generate(
+           width,
+           (x) => generator(Vector(x: x, y: y)),
+           growable: false,
+         ),
+         growable: false,
+       );
 
   static Future<Grid<T>> fromStream<T>(
     Stream<String> lines,
