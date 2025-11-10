@@ -1,0 +1,188 @@
+name: Workflow
+on:
+  push:
+    branches: [ main ]
+  pull_request: { }
+
+jobs:
+  required-meta:
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    uses: BlindfoldedSurgery/actions-meta/.github/workflows/required.yml@v1
+
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Get dependencies
+        run: dart pub get --enforce-lockfile
+      - name: Generate code
+        run: dart run build_runner build
+      - name: Run tests
+        run: dart test --file-reporter json:test-results.json --coverage=.coverage .
+        env:
+          S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+          S3_INPUT_BUCKET_NAME: ${{ secrets.S3_INPUT_BUCKET_NAME }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      - name: Install coverage package
+        run: dart pub global activate coverage
+      - name: Convert to LCOV
+        run: dart pub global run coverage:format_coverage --report-on=lib --report-on=core/lib --lcov -o ./.coverage/lcov.info -i ./.coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: .coverage/lcov.info
+
+  check-format:
+    name: Check Format
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Check formatting
+        run: dart format bin lib test tool packages/day_builder/lib packages/core/lib packages/core/test --set-exit-if-changed
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Remove frontend overrides
+        # dart analyzer will just ignore our exclude for the frontend otherwise
+        run: rm frontend/analysis_options.yaml
+      - uses: jdx/mise-action@v2
+      - name: Get dependencies
+        run: dart pub get --enforce-lockfile
+      - name: Generate code
+        run: dart run build_runner build
+      - name: Run Analysis
+        run: dart analyze --fatal-infos
+
+  build-core:
+    name: Build Binary
+    needs:
+      - required-meta
+      - test
+      - check-format
+      - lint
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: linux-amd64
+            runner: ubuntu-24.04
+          - id: linux-arm64
+            runner: ubuntu-24.04-arm
+          - id: macos-amd64
+            runner: macos-latest
+          - id: win-amd64
+            runner: windows-latest
+            filename: advent.exe
+    runs-on: ${{ matrix.runner }}
+    env:
+      # renovate: datasource=docker depName=dart
+      DART_VERSION: 3.9.4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
+      - run: |
+          dart pub get --enforce-lockfile
+          dart run build_runner build
+          mkdir output
+      - run: dart compile exe bin/main.dart -o "output/${{ matrix.filename || 'advent' }}"
+      - if: matrix.runner != 'windows-latest'
+        run: chmod +x "output/${{ matrix.filename || 'advent' }}"
+      - uses: actions/upload-artifact@v4
+        if: github.ref_name == github.event.repository.default_branch
+        with:
+          name: binary-${{ matrix.id }}
+          path: output/*
+
+  build-frontend:
+    runs-on: ubuntu-24.04
+    needs:
+      - test
+      - lint
+      - check-format
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - uses: jdx/mise-action@v3
+        with:
+          working_directory: frontend
+      - name: Configure pub dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.temp }}/pub-cache
+            .dart_tool
+          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
+      - name: Configure pub cache location
+        env:
+          PUB_CACHE: ${{ runner.temp }}/pub-cache
+        run: |
+          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
+      - name: Prepare core
+        run: |
+          dart pub get
+          dart run build_runner build
+      - name: Get Flutter dependencies
+        working-directory: frontend
+        run: flutter pub get
+      - name: Build web package
+        working-directory: frontend
+        run: flutter build web --base-href="/2025/"
+      - name: Store build result
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-app
+          path: frontend/build/web
+
+  build:
+    runs-on: ubuntu-24.04
+    name: All Build Finished
+    needs:
+      - build-core
+      - build-frontend
+    steps:
+      - run: echo "Builds were successful"
+
+  deploy-frontend:
+    runs-on: ubuntu-24.04
+    if: github.ref_name == github.event.repository.default_branch
+    needs:
+      - build-frontend
+    concurrency: production
+    environment:
+      name: Production
+      url: https://aoc.bjoernpetersen.net/2025/
+    container: rclone/rclone:1.69
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-app
+      - name: Save rclone config
+        env:
+          CONFIG: |
+            [r2]
+            type = s3
+            provider = Cloudflare
+            access_key_id = ${{ secrets.S3_ACCESS_KEY_ID }}
+            secret_access_key = ${{ secrets.S3_SECRET_ACCESS_KEY }}
+            endpoint = ${{ secrets.S3_ENDPOINT }}
+        run: |
+          mkdir -p /config/rclone
+          echo "$CONFIG" > /config/rclone/rclone.conf
+      - name: Copy web package to bucket
+        run: rclone sync "$PWD" "r2:${{ secrets.S3_PUBLIC_BUCKET_NAME }}/2025/"

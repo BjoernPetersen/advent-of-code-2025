@@ -1,0 +1,16 @@
+name: aoc_core
+description: Common code for aoc day generation and implementation code.
+version: 1.0.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  collection: ^1.18.0
+  meta: ^1.0.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.0.0
