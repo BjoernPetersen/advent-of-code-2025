@@ -109,7 +109,7 @@ jobs:
       - run: dart compile exe bin/main.dart -o "output/${{ matrix.filename || 'advent' }}"
       - if: matrix.runner != 'windows-latest'
         run: chmod +x "output/${{ matrix.filename || 'advent' }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: github.ref_name == github.event.repository.default_branch
         with:
           name: binary-${{ matrix.id }}
@@ -150,7 +150,7 @@ jobs:
         working-directory: frontend
         run: flutter build web --base-href="/2025/"
       - name: Store build result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: web-app
           path: frontend/build/web
@@ -185,7 +185,7 @@ jobs:
       url: https://aoc.bjoernpetersen.net/2025/
     container: rclone/rclone:1.69
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: web-app
       - name: Save rclone config
