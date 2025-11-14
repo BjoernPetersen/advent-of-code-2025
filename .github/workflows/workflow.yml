@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: jdx/mise-action@v3
       - name: Get dependencies
         run: dart pub get --enforce-lockfile
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: jdx/mise-action@v3
       - name: Get dependencies
         run: dart pub get --enforce-lockfile
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Remove frontend overrides
         # dart analyzer will just ignore our exclude for the frontend otherwise
         run: rm frontend/analysis_options.yaml
@@ -98,7 +98,7 @@ jobs:
       # renovate: datasource=docker depName=dart
       DART_VERSION: 3.10.0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: ${{ env.DART_VERSION }}
@@ -123,7 +123,7 @@ jobs:
       - check-format
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: jdx/mise-action@v3
         with:
           working_directory: frontend
