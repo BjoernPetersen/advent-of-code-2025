@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v3
       - name: Get dependencies
         run: dart pub get --enforce-lockfile
       - name: Generate code
@@ -50,7 +50,7 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v3
       - name: Get dependencies
         run: dart pub get --enforce-lockfile
       - name: Check formatting
@@ -65,7 +65,7 @@ jobs:
       - name: Remove frontend overrides
         # dart analyzer will just ignore our exclude for the frontend otherwise
         run: rm frontend/analysis_options.yaml
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v3
       - name: Get dependencies
         run: dart pub get --enforce-lockfile
       - name: Generate code
