@@ -31,19 +31,15 @@ final class DayBuilder implements Builder {
     );
     final namespace = lib.exportNamespace;
     return Supertypes(
-      intPart: (namespace.get('IntPart')! as ClassElement).thisType,
-      stringPart: (namespace.get('StringPart') as ClassElement).thisType,
+      intPart: (namespace.get2('IntPart') as ClassElement).thisType,
+      stringPart: (namespace.get2('StringPart') as ClassElement).thisType,
     );
   }
 
   Future<PartDeclaration?> _tryLoadPart(
-    Element element,
+    ClassElement element,
     Supertypes supertypes,
   ) async {
-    if (element is! ClassElement) {
-      return null;
-    }
-
     if (!element.isPublic || element.isAbstract) {
       return null;
     }
@@ -64,6 +60,11 @@ final class DayBuilder implements Builder {
     }
 
     final className = element.name;
+
+    if (className == null) {
+      print('Class has no name $element');
+      return null;
+    }
 
     final partNumber = switch (className) {
       'PartOne' => 1,
@@ -90,7 +91,7 @@ final class DayBuilder implements Builder {
   }) async {
     final result = <PartDeclaration>[];
 
-    for (final element in library.topLevelElements) {
+    for (final element in library.classes) {
       final partDeclaration = await _tryLoadPart(element, supertypes);
       if (partDeclaration != null) {
         result.add(partDeclaration);
@@ -219,7 +220,10 @@ final class DayBuilder implements Builder {
     unawaited(
       buildStep.writeAsString(
         target,
-        _createContents(inputLib.source.shortName, dayDeclarations),
+        _createContents(
+          inputLib.firstFragment.source.shortName,
+          dayDeclarations,
+        ),
       ),
     );
   }
