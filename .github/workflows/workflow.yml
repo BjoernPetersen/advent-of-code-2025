@@ -42,6 +42,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: .coverage/lcov.info
+          disable_search: true
 
   check-format:
     name: Check Format
