@@ -107,10 +107,10 @@ packages:
     dependency: transitive
     description:
       name: cross_file
-      sha256: "942a4791cd385a68ccb3b32c71c427aba508a1bb949b86dff2adbe4049f16239"
+      sha256: "701dcfc06da0882883a2657c445103380e53e647060ad8d9dfb710c100996608"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.5"
+    version: "0.3.5+1"
   crypto:
     dependency: transitive
     description:
@@ -391,10 +391,10 @@ packages:
     dependency: transitive
     description:
       name: squadron
-      sha256: d1d20a7a8e10d532fc0846c57aa6a5e3dbae2f5500550c46b3e593e3de934032
+      sha256: f1ac69541933bd9749dff4fdfe60059b6207a2b8703b202991028556f788f582
       url: "https://pub.dev"
     source: hosted
-    version: "7.2.0"
+    version: "7.4.0"
   stack_trace:
     dependency: transitive
     description:
