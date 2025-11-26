@@ -96,7 +96,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     env:
       # renovate: datasource=docker depName=dart
-      DART_VERSION: 3.10.1
+      DART_VERSION: 3.10.2
     steps:
       - uses: actions/checkout@v6
       - uses: dart-lang/setup-dart@v1
