@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import 'package:aoc/src/input/input_reader.dart';
-import 'package:aoc/src/input/local.dart' as local;
-import 'package:aoc/src/input/bytes.dart' as bytes_reader;
-import 'package:aoc/src/input/remote.dart' as remote;
-import 'package:aoc/src/input/strings.dart' as strings;
-import 'package:aoc/src/input/util.dart';
+import 'package:aoc_input/src/input/input_reader.dart';
+import 'package:aoc_input/src/input/local.dart' as local;
+import 'package:aoc_input/src/input/bytes.dart' as bytes_reader;
+import 'package:aoc_input/src/input/remote.dart' as remote;
+import 'package:aoc_input/src/input/strings.dart' as strings;
+import 'package:aoc_input/src/input/util.dart';
 import 'package:dotenv/dotenv.dart';
 
-export 'package:aoc/src/input/input_reader.dart';
+export 'package:aoc_input/src/input/input_reader.dart';
 
 InputReader createReaderForFile(File path) => local.createReader(path);
 

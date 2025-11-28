@@ -1,6 +1,6 @@
-import 'package:aoc/src/input/input_reader.dart';
-import 'package:aoc/src/input/remote_client.dart';
-import 'package:aoc/src/input/util.dart';
+import 'package:aoc_input/src/input/input_reader.dart';
+import 'package:aoc_input/src/input/remote_client.dart';
+import 'package:aoc_input/src/input/util.dart';
 import 'package:dotenv/dotenv.dart';
 
 import 'bytes.dart' as bytes_reader;

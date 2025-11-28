@@ -1,4 +1,4 @@
-import 'package:aoc/input.dart';
+import 'package:aoc_input/input.dart';
 import 'package:test/test.dart';
 
 void main() {

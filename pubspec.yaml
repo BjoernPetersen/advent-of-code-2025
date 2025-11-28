@@ -11,4 +11,5 @@ workspace:
   - packages/core
   - packages/day_builder
   - packages/frontend
+  - packages/input
   - packages/solutions

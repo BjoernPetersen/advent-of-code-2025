@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:aoc/day.dart';
-import 'package:aoc/input.dart';
+import 'package:aoc_input/input.dart';
 import 'package:args/args.dart';
 
 Future<void> main(List<String> args) async {

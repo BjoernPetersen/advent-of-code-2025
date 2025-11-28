@@ -1,4 +1,4 @@
-import 'package:aoc/src/input/input_reader.dart';
+import 'package:aoc_input/src/input/input_reader.dart';
 
 final class _StringsInputReader implements InputReader {
   final List<String> _lines;

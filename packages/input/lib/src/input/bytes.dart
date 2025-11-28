@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:aoc/src/input/input_reader.dart';
+import 'package:aoc_input/src/input/input_reader.dart';
 
 final class _BytesReader implements InputReader {
   final Stream<List<int>> _bytes;
