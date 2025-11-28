@@ -15,8 +15,8 @@ jobs:
       pull-requests: write
     uses: BlindfoldedSurgery/actions-meta/.github/workflows/required.yml@v2
 
-  test:
-    name: Test
+  test-core:
+    name: Test core
     runs-on: ubuntu-24.04
     steps:
       - name: Check out repo
@@ -24,9 +24,46 @@ jobs:
       - uses: jdx/mise-action@v3
       - name: Get dependencies
         run: dart pub get --enforce-lockfile
+      - name: Run tests
+        working-directory: packages/core
+        run: dart test --file-reporter json:test-results.json --coverage=.coverage .
+      - name: Install coverage package
+        run: dart pub global activate coverage
+      - name: Convert to LCOV
+        run: dart pub global run coverage:format_coverage --report-on=lib --report-on=packages/core/lib --lcov -o ./.coverage/lcov.info -i ./packages/core/.coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: .coverage/lcov.info
+          disable_search: true
+
+  test-solutions:
+    name: Test solutions
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v6
+      - uses: jdx/mise-action@v3
+      - name: Configure pub dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.temp }}/pub-cache
+            .dart_tool
+          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
+      - name: Configure pub cache location
+        env:
+          PUB_CACHE: ${{ runner.temp }}/pub-cache
+        run: |
+          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
+      - name: Get dependencies
+        run: dart pub get --enforce-lockfile
       - name: Generate code
+        working-directory: packages/solutions
         run: dart run build_runner build
       - name: Run tests
+        working-directory: packages/solutions
         run: dart test --file-reporter json:test-results.json --coverage=.coverage .
         env:
           S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
@@ -36,7 +73,7 @@ jobs:
       - name: Install coverage package
         run: dart pub global activate coverage
       - name: Convert to LCOV
-        run: dart pub global run coverage:format_coverage --report-on=lib --report-on=core/lib --lcov -o ./.coverage/lcov.info -i ./.coverage
+        run: dart pub global run coverage:format_coverage --report-on=lib --report-on=packages/solutions/lib --lcov -o ./.coverage/lcov.info -i ./packages/solutions/.coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -51,10 +88,23 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
       - uses: jdx/mise-action@v3
+      - name: Configure pub dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.temp }}/pub-cache
+            .dart_tool
+          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
+      - name: Configure pub cache location
+        env:
+          PUB_CACHE: ${{ runner.temp }}/pub-cache
+        run: |
+          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
       - name: Get dependencies
         run: dart pub get --enforce-lockfile
       - name: Check formatting
-        run: dart format bin lib test tool packages/day_builder/lib packages/core/lib packages/core/test --set-exit-if-changed
+        run: |
+          dart format packages/*/bin packages/*/lib packages/*tool --set-exit-if-changed
 
   lint:
     name: Lint
@@ -66,20 +116,34 @@ jobs:
         # dart analyzer will just ignore our exclude for the frontend otherwise
         run: rm frontend/analysis_options.yaml
       - uses: jdx/mise-action@v3
+      - name: Configure pub dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.temp }}/pub-cache
+            .dart_tool
+          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
+      - name: Configure pub cache location
+        env:
+          PUB_CACHE: ${{ runner.temp }}/pub-cache
+        run: |
+          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
       - name: Get dependencies
         run: dart pub get --enforce-lockfile
       - name: Generate code
+        working-directory: packages/solutions
         run: dart run build_runner build
       - name: Run Analysis
         run: dart analyze --fatal-infos
 
-  build-core:
+  build-cli:
     name: Build Binary
     needs:
       - required-meta
-      - test
       - check-format
       - lint
+      - test-core
+      - test-solutions
     strategy:
       fail-fast: false
       matrix:
@@ -104,8 +168,10 @@ jobs:
           sdk: ${{ env.DART_VERSION }}
       - run: |
           dart pub get --enforce-lockfile
-          dart run build_runner build
           mkdir output
+      - name: Generate code
+        working-directory: packages/solutions
+        run: dart run build_runner build
       - run: dart compile exe bin/main.dart -o "output/${{ matrix.filename || 'advent' }}"
       - if: matrix.runner != 'windows-latest'
         run: chmod +x "output/${{ matrix.filename || 'advent' }}"
@@ -118,7 +184,8 @@ jobs:
   build-frontend:
     runs-on: ubuntu-24.04
     needs:
-      - test
+      - test-core
+      - test-solutions
       - lint
       - check-format
     steps:
@@ -142,10 +209,11 @@ jobs:
           PUB_CACHE: ${{ runner.temp }}/pub-cache
         run: |
           echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
-      - name: Prepare core
-        run: |
-          dart pub get
-          dart run build_runner build
+      - name: Install Dart dependencies
+        run: dart pub get --enforce-lockfile
+      - name: Generate code
+        working-directory: packages/solutions
+        run: dart run build_runner build
       - name: Get Flutter dependencies
         working-directory: frontend
         run: flutter pub get
@@ -162,10 +230,11 @@ jobs:
     runs-on: ubuntu-24.04
     if: "!cancelled() && github.event_name == 'pull_request'"
     needs:
-      - test
+      - test-core
+      - test-solutions
       - check-format
       - lint
-      - build-core
+      - build-cli
       - build-frontend
     steps:
       - run: |

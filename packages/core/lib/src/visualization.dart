@@ -5,7 +5,9 @@ abstract interface class Visualizer<T> {
 }
 
 abstract interface class Visualization {
-  Future<Visualizer<Grid<I>>> createGridVisualizer<I>();
+  Future<Visualizer<Grid<I>>> createGridVisualizer<I>([
+    String Function(I)? itemToString,
+  ]);
 }
 
 @immutable
@@ -22,7 +24,9 @@ final class StubVisualization implements Visualization {
   const StubVisualization();
 
   @override
-  Future<Visualizer<Grid<I>>> createGridVisualizer<I>() {
+  Future<Visualizer<Grid<I>>> createGridVisualizer<I>([
+    String Function(I)? itemToString,
+  ]) {
     return Future.value(const StubVisualizer());
   }
 }
