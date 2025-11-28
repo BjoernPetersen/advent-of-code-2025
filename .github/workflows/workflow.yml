@@ -145,6 +145,7 @@ jobs:
               - packages/core
               - packages/day_builder
               - packages/input
+              - packages/input_s3
               - packages/solutions
         run: |
           printenv PUBSPEC_OVERRIDE > pubspec_overrides.yaml

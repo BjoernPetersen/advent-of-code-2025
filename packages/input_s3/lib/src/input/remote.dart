@@ -1,9 +1,6 @@
-import 'package:aoc_input/src/input/input_reader.dart';
-import 'package:aoc_input/src/input/remote_client.dart';
-import 'package:aoc_input/src/input/util.dart';
+import 'package:aoc_input/input.dart';
+import 'package:aoc_input_s3/src/input/remote_client.dart';
 import 'package:dotenv/dotenv.dart';
-
-import 'bytes.dart' as bytes_reader;
 
 final class _RemoteReader implements InputReader {
   final RemoteClient _client;
@@ -16,7 +13,7 @@ final class _RemoteReader implements InputReader {
   @override
   Stream<String> readLines() async* {
     final encoded = _client.readBytes('${padDay(day)}$suffix.txt');
-    final bytesReader = bytes_reader.createReader(encoded);
+    final bytesReader = createRawBytesReader(encoded);
     yield* bytesReader.readLines();
   }
 }

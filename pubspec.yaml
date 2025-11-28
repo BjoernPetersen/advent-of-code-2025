@@ -12,4 +12,5 @@ workspace:
   - packages/day_builder
   - packages/frontend
   - packages/input
+  - packages/input_s3
   - packages/solutions

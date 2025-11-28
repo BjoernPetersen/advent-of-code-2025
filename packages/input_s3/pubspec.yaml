@@ -1,5 +1,5 @@
-name: aoc_input
-description: Advent of Code 2025 input loading
+name: aoc_input_s3
+description: Advent of Code 2025 S3 input loading
 version: 1.0.0
 publish_to: none
 resolution: workspace
@@ -9,8 +9,11 @@ environment:
 
 dependencies:
   aoc_core: any
+  aoc_input: any
+  dotenv: ^4.2.0
   logger: ^2.0.0
   meta: ^1.0.0
+  minio: ^3.5.7
 
 dev_dependencies:
   lints: ^6.0.0
