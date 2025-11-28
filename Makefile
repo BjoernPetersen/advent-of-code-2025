@@ -9,3 +9,6 @@ watch:
 .PHONY: format
 format:
 	dart format packages/*/bin packages/*/lib packages/*/tool
+
+upload:
+	dart run tool/sync.dart

@@ -11,6 +11,8 @@ InputReader getExampleReader(int dayNum, String name) {
 
 InputReader getInputReader(int dayNum, {String suffix = ''}) {
   final env = DotEnv(includePlatformEnvironment: true, quiet: true);
+  env.load();
+
   if (env['USE_LOCAL_STORAGE'] == 'true') {
     print('Using local storage due to override');
     return createReaderForDay(dayNum, suffix: suffix);

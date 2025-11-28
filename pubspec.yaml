@@ -14,3 +14,7 @@ workspace:
   - packages/input
   - packages/input_s3
   - packages/solutions
+
+dev_dependencies:
+  aoc_input_s3: any
+  dotenv: ^4.2.0

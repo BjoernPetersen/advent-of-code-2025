@@ -3,16 +3,17 @@ import 'dart:io';
 import 'package:aoc_input_s3/src/input/remote_client.dart';
 import 'package:dotenv/dotenv.dart';
 
-Future<void> main(List<String> args) async {
-  final client = RemoteClient.fromEnv(
-    DotEnv(includePlatformEnvironment: true)..load(),
-  );
-  final dir = Directory('inputs');
+Future<void> sync(
+  DotEnv env, {
+  required Directory inputsDir,
+  required bool download,
+}) async {
+  final client = RemoteClient.fromEnv(env);
 
-  if (args.firstOrNull == 'download') {
-    await _download(client, dir);
+  if (download) {
+    await _download(client, inputsDir);
   } else {
-    await _upload(client, dir);
+    await _upload(client, inputsDir);
   }
 }
 

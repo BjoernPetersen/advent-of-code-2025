@@ -16,6 +16,4 @@ dependencies:
   minio: ^3.5.7
 
 dev_dependencies:
-  aoc_input_s3: any
-  dotenv: ^4.2.0
   lints: ^6.0.0
