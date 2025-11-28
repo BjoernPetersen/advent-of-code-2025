@@ -15,9 +15,15 @@ jobs:
       pull-requests: write
     uses: BlindfoldedSurgery/actions-meta/.github/workflows/required.yml@v2
 
-  test-core:
-    name: Test core
+  test-foundation:
+    name: Test ${{ matrix.path }}
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - path: packages/core
+          - path: packages/input
     steps:
       - name: Check out repo
         uses: actions/checkout@v6
@@ -26,12 +32,12 @@ jobs:
       - name: Get dependencies
         run: flutter pub get --enforce-lockfile
       - name: Run tests
-        working-directory: packages/core
+        working-directory: ${{ matrix.path }}
         run: dart test --file-reporter json:test-results.json --coverage=.coverage .
       - name: Install coverage package
         run: dart pub global activate coverage
       - name: Convert to LCOV
-        run: dart pub global run coverage:format_coverage --report-on=lib --report-on=packages/core/lib --lcov -o ./.coverage/lcov.info -i ./packages/core/.coverage
+        run: dart pub global run coverage:format_coverage --report-on=lib --report-on=${{ matrix.path }}/lib --lcov -o ./.coverage/lcov.info -i ${{ matrix.path }}/.coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -107,7 +113,7 @@ jobs:
       - required-meta
       - check-format
       - lint
-      - test-core
+      - test-foundation
       - test-solutions
     strategy:
       fail-fast: false
@@ -138,6 +144,7 @@ jobs:
               - packages/cli
               - packages/core
               - packages/day_builder
+              - packages/input
               - packages/solutions
         run: |
           printenv PUBSPEC_OVERRIDE > pubspec_overrides.yaml
@@ -161,7 +168,7 @@ jobs:
   build-frontend:
     runs-on: ubuntu-24.04
     needs:
-      - test-core
+      - test-foundation
       - test-solutions
       - lint
       - check-format
@@ -188,7 +195,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: "!cancelled() && github.event_name == 'pull_request'"
     needs:
-      - test-core
+      - test-foundation
       - test-solutions
       - check-format
       - lint

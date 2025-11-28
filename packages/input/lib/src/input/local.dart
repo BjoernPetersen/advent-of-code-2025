@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:aoc/src/input/input_reader.dart';
+import 'package:aoc_input/src/input/input_reader.dart';
 
 final class _LocalReader implements InputReader {
   final File path;

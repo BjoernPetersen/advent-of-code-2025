@@ -1,4 +1,4 @@
-import 'package:aoc/input.dart';
+import 'package:aoc_input/input.dart';
 import 'package:mutex/mutex.dart';
 
 final class CachedInputReader implements InputReader {

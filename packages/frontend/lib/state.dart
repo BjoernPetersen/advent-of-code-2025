@@ -1,5 +1,5 @@
 import 'package:aoc/day.dart';
-import 'package:aoc/input.dart';
+import 'package:aoc_input/input.dart';
 import 'package:aoc_frontend/input.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:file_picker/file_picker.dart';
