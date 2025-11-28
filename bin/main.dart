@@ -46,13 +46,17 @@ Future<void> main(List<String> args) async {
     exit(1);
   }
 
+  // TODO: implement CLI visualization
+  final visualization = StubVisualization();
   final List<Future<String>> results = [];
 
   final startTime = DateTime.now();
   print('Started at $startTime');
 
   if (part == null || part == 1) {
-    results.add(day.partOne.calculateString(inputReader.readLines()));
+    results.add(
+      day.partOne.calculateString(visualization, inputReader.readLines()),
+    );
   }
 
   final partTwo = day.partTwo;
@@ -62,7 +66,9 @@ Future<void> main(List<String> args) async {
       exit(1);
     }
 
-    results.add(partTwo.calculateString(inputReader.readLines()));
+    results.add(
+      partTwo.calculateString(visualization, inputReader.readLines()),
+    );
   }
 
   final List<String> values = await Future.wait(results);

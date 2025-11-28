@@ -1,10 +1,11 @@
+import 'package:aoc_core/src/visualization.dart';
 import 'package:meta/meta.dart';
 
 @immutable
 sealed class Part<T> {
   const Part();
 
-  Future<T> calculate(Stream<String> input);
+  Future<T> calculate(Visualization visualization, Stream<String> input);
 }
 
 @immutable
@@ -26,15 +27,18 @@ final class Day<A extends Part, B extends Part> {
 }
 
 extension StringResult on Part {
-  Future<String> calculateString(Stream<String> input) async {
+  Future<String> calculateString(
+    Visualization visualization,
+    Stream<String> input,
+  ) async {
     final String result;
     switch (this) {
       case StringPart():
         final typed = this as StringPart;
-        result = await typed.calculate(input);
+        result = await typed.calculate(visualization, input);
       case IntPart():
         final typed = this as IntPart;
-        final intValue = await typed.calculate(input);
+        final intValue = await typed.calculate(visualization, input);
         result = intValue.toString();
     }
     return result;
