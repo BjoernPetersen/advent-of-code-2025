@@ -147,9 +147,11 @@ jobs:
       - name: Generate code
         working-directory: packages/solutions
         run: dart run build_runner build
-      - run: dart compile exe bin/main.dart -o "output/${{ matrix.filename || 'advent' }}"
-      - if: matrix.runner != 'windows-latest'
-        run: chmod +x "output/${{ matrix.filename || 'advent' }}"
+      - name: Compile binary
+        working-directory: packages/cli
+        run: dart compile exe bin/main.dart -o "${{ github.workspace }}/output/${{ matrix.filename || 'advent' }}"
+      - if: runner.os != 'Windows'
+        run: chmod +x "output/advent"
       - uses: actions/upload-artifact@v5
         if: github.ref_name == github.event.repository.default_branch
         with:
