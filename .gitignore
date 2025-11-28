@@ -20,10 +20,9 @@ doc/api/
 .idea/
 
 # Generated files
-lib/**/*.g.dart
-lib/**/*.config.dart
-lib/src/version.dart
-lib/day.dart
+packages/solutions/lib/**/*.g.dart
+packages/solutions/lib/**/*.config.dart
+packages/solutions/lib/src/version.dart
 
 .env
 !.env.example

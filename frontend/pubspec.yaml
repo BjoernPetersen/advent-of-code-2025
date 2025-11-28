@@ -24,7 +24,7 @@ environment:
 
 dependencies:
   aoc:
-    path: ..
+    path: ../packages/solutions
   bloc_concurrency: ^0.3.0
   cupertino_icons: ^1.0.8
   file_picker: 10.3.7
