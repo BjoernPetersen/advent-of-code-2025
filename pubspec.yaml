@@ -1,4 +1,4 @@
-name: _
+name: aoc_workspace
 description: Advent of Code 2025 Workspace
 version: 1.0.0
 publish_to: none
@@ -10,4 +10,5 @@ workspace:
   - packages/cli
   - packages/core
   - packages/day_builder
+  - packages/frontend
   - packages/solutions

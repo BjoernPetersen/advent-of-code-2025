@@ -1,5 +1,0 @@
-[tools]
-flutter = "3.38.3"
-
-[settings]
-disable_tools = ["dart"]
