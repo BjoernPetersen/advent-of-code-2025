@@ -1,0 +1,19 @@
+name: Set up pub cache
+description: Sets up pub cache and exports PUB_CACHE variable. Does not pull dependencies.
+
+runs:
+  using: composite
+  steps:
+    - name: Configure pub dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ runner.temp }}/pub-cache
+          .dart_tool
+        key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
+    - name: Configure pub cache location
+      shell: bash
+      env:
+        PUB_CACHE: ${{ runner.temp }}/pub-cache
+      run: |
+        echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"

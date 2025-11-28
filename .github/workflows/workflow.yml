@@ -22,18 +22,7 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
       - uses: jdx/mise-action@v3
-      - name: Configure pub dependencies cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ runner.temp }}/pub-cache
-            .dart_tool
-          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
-      - name: Configure pub cache location
-        env:
-          PUB_CACHE: ${{ runner.temp }}/pub-cache
-        run: |
-          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/setup-pub-cache
       - name: Get dependencies
         run: flutter pub get --enforce-lockfile
       - name: Run tests
@@ -57,18 +46,7 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
       - uses: jdx/mise-action@v3
-      - name: Configure pub dependencies cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ runner.temp }}/pub-cache
-            .dart_tool
-          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
-      - name: Configure pub cache location
-        env:
-          PUB_CACHE: ${{ runner.temp }}/pub-cache
-        run: |
-          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/setup-pub-cache
       - name: Get dependencies
         run: flutter pub get --enforce-lockfile
       - name: Generate code
@@ -100,18 +78,7 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
       - uses: jdx/mise-action@v3
-      - name: Configure pub dependencies cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ runner.temp }}/pub-cache
-            .dart_tool
-          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
-      - name: Configure pub cache location
-        env:
-          PUB_CACHE: ${{ runner.temp }}/pub-cache
-        run: |
-          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/setup-pub-cache
       - name: Get dependencies
         run: flutter pub get --enforce-lockfile
       - name: Check formatting
@@ -125,18 +92,7 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
       - uses: jdx/mise-action@v3
-      - name: Configure pub dependencies cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ runner.temp }}/pub-cache
-            .dart_tool
-          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
-      - name: Configure pub cache location
-        env:
-          PUB_CACHE: ${{ runner.temp }}/pub-cache
-        run: |
-          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/setup-pub-cache
       - name: Get dependencies
         run: flutter pub get --enforce-lockfile
       - name: Generate code
@@ -211,18 +167,7 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
       - uses: jdx/mise-action@v3
-      - name: Configure pub dependencies cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ runner.temp }}/pub-cache
-            .dart_tool
-          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
-      - name: Configure pub cache location
-        env:
-          PUB_CACHE: ${{ runner.temp }}/pub-cache
-        run: |
-          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/setup-pub-cache
       - name: Install Dart dependencies
         run: flutter pub get --enforce-lockfile
       - name: Generate code
