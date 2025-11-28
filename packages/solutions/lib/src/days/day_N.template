@@ -5,7 +5,10 @@ final class PartOne extends IntPart {
   const PartOne();
 
   @override
-  Future<int> calculate(Stream<String> input) async {
+  Future<int> calculate(
+    Visualization visualization,
+    Stream<String> input,
+  ) async {
     return 0;
   }
 }
