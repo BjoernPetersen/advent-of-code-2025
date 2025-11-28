@@ -11,16 +11,16 @@ dependencies:
   aoc_core: any
   aoc_input: any
   async: ^2.11.0
-  dotenv: ^4.2.0
   logger: ^2.0.0
   memoized: ^2.0.0
   meta: ^1.0.0
-  minio: ^3.5.7
   squadron: ^7.0.0
 
 dev_dependencies:
+  aoc_input_s3: any
   build_runner: ^2.4.0
   day_builder: any
+  dotenv: ^4.2.0
   lints: ^6.0.0
   squadron_builder: ^8.0.0
   test: ^1.0.0

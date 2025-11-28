@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:aoc_input/src/input/remote_client.dart';
+import 'package:aoc_input_s3/src/input/remote_client.dart';
 import 'package:dotenv/dotenv.dart';
 
 Future<void> main(List<String> args) async {
