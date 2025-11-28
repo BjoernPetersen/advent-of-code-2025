@@ -1,8 +1,11 @@
 import 'dart:io';
 
 import 'package:aoc/day.dart';
+import 'package:aoc_cli/src/visualization.dart';
 import 'package:aoc_input/input.dart';
 import 'package:args/args.dart';
+import 'package:dart_console/dart_console.dart';
+import 'package:logger/logger.dart';
 
 Future<void> main(List<String> args) async {
   final parser = ArgParser();
@@ -46,8 +49,8 @@ Future<void> main(List<String> args) async {
     exit(1);
   }
 
-  // TODO: implement CLI visualization
-  final visualization = StubVisualization();
+  final console = Console();
+  final visualization = CliVisualization(console);
   final List<Future<String>> results = [];
 
   final startTime = DateTime.now();
