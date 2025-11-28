@@ -4,6 +4,7 @@ import 'package:test/test.dart';
 import '../input_helper.dart';
 
 void main() {
+  const visualization = StubVisualization();
   final dayNum = 1;
   final day = getDay(dayNum);
 
@@ -15,7 +16,7 @@ void main() {
         test('example $example passes', () {
           final reader = getExampleReader(dayNum, example);
           expect(
-            part.calculate(reader.readLines()),
+            part.calculate(visualization, reader.readLines()),
             completion(expectedResult),
           );
         });
@@ -23,7 +24,10 @@ void main() {
 
       test('input passes', () {
         final reader = getInputReader(dayNum);
-        expect(part.calculate(reader.readLines()), completion(0));
+        expect(
+          part.calculate(visualization, reader.readLines()),
+          completion(0),
+        );
       });
     });
     group('part 2', () {
@@ -37,7 +41,7 @@ void main() {
         test('example $example passes', () {
           final reader = getExampleReader(dayNum, example);
           expect(
-            part.calculate(reader.readLines()),
+            part.calculate(visualization, reader.readLines()),
             completion(expectedResult),
           );
         });
@@ -45,7 +49,10 @@ void main() {
 
       test('input passes', () {
         final reader = getInputReader(dayNum);
-        expect(part.calculate(reader.readLines()), completion(0));
+        expect(
+          part.calculate(visualization, reader.readLines()),
+          completion(0),
+        );
       });
     }, skip: day.partTwo == null);
   });
