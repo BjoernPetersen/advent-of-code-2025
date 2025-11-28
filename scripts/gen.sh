@@ -8,6 +8,8 @@ touch "examples/$N/instructions-1.txt"
 mkdir -p "inputs"
 touch "inputs/$N.txt"
 
+cd packages/solutions
+
 for FILE in $(find lib test -type f -name "*.template")
 do
   TARGET_FILE="${FILE%template}dart"
