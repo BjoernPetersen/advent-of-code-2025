@@ -33,10 +33,7 @@ final class MyHomePage extends StatelessWidget {
     return BlocProvider(
       create: (_) => AocBloc(),
       child: const Scaffold(
-        body: Padding(
-          padding: EdgeInsets.all(5.0),
-          child: SelectionGuide(),
-        ),
+        body: Padding(padding: EdgeInsets.all(5.0), child: SelectionGuide()),
       ),
     );
   }
@@ -47,30 +44,29 @@ final class SelectionGuide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AocBloc, AocState>(builder: (context, state) {
-      final children = <Widget>[
-        const DaySelection(),
-        const Divider(),
-      ];
+    return BlocBuilder<AocBloc, AocState>(
+      builder: (context, state) {
+        final children = <Widget>[const DaySelection(), const Divider()];
 
-      if (state.day != null) {
-        if (state.isMultipart) {
-          children.add(const PartSelection());
-          children.add(const Divider());
-        }
+        if (state.day != null) {
+          if (state.isMultipart) {
+            children.add(const PartSelection());
+            children.add(const Divider());
+          }
 
-        if (state.isReady) {
-          children.add(const Expanded(child: ActionArea()));
-        } else if (state.runStates.isNotEmpty) {
-          children.add(const Expanded(child: RunningState()));
+          if (state.isReady) {
+            children.add(const Expanded(child: ActionArea()));
+          } else if (state.runStates.isNotEmpty) {
+            children.add(const Expanded(child: RunningState()));
+          }
         }
-      }
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.max,
-        children: children,
-      );
-    });
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.max,
+          children: children,
+        );
+      },
+    );
   }
 }
 
@@ -82,9 +78,7 @@ final class DaySelection extends StatelessWidget {
     return Wrap(
       spacing: 5.0,
       runSpacing: 3.0,
-      children: [
-        for (final day in availableDays) DayCard(day),
-      ],
+      children: [for (final day in availableDays) DayCard(day)],
     );
   }
 }
@@ -92,10 +86,7 @@ final class DaySelection extends StatelessWidget {
 final class DayCard extends StatelessWidget {
   final int day;
 
-  const DayCard(
-    this.day, {
-    super.key,
-  });
+  const DayCard(this.day, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -208,9 +199,7 @@ final class RunStateView extends StatelessWidget {
           ),
         ),
         ResultIndicator(state),
-        SelectionArea(
-          child: ResultText(state),
-        ),
+        SelectionArea(child: ResultText(state)),
       ],
     );
   }

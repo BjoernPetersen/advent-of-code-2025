@@ -6,9 +6,7 @@ final class CachedInputReader implements InputReader {
   final Mutex _mutex;
   final InputReader _delegate;
 
-  CachedInputReader(this._delegate)
-      : _mutex = Mutex(),
-        _data = null;
+  CachedInputReader(this._delegate) : _mutex = Mutex(), _data = null;
 
   @override
   Stream<String> readLines() async* {

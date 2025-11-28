@@ -62,10 +62,10 @@ final class RunState {
   });
 
   RunState.started(this.part)
-      : startTime = DateTime.now(),
-        endTime = null,
-        result = null,
-        error = null;
+    : startTime = DateTime.now(),
+      endTime = null,
+      result = null,
+      error = null;
 
   RunState failed(String error) {
     if (isDone) {
@@ -134,10 +134,10 @@ final class AocState {
   }
 
   const AocState.initial()
-      : day = null,
-        enablePartOne = true,
-        enablePartTwo = false,
-        runStates = const [];
+    : day = null,
+      enablePartOne = true,
+      enablePartTwo = false,
+      runStates = const [];
 
   const AocState._({
     required this.day,
@@ -224,10 +224,7 @@ final class AocBloc extends Bloc<AocEvent, AocState> {
     on<ClearResult>((event, emit) => emit(state.updateRunState([])));
   }
 
-  Future<void> _pickFile(
-    OpenFilePicker event,
-    Emitter<AocState> emit,
-  ) async {
+  Future<void> _pickFile(OpenFilePicker event, Emitter<AocState> emit) async {
     if (!state.isReady) {
       return;
     }
@@ -255,10 +252,14 @@ final class AocBloc extends Bloc<AocEvent, AocState> {
     ];
     emit(
       state.updateRunState(
-          parts.map((e) => RunState.started(e)).toList(growable: false)),
+        parts.map((e) => RunState.started(e)).toList(growable: false),
+      ),
     );
 
-    final tasks = parts.map((e) => e.calculateString(inputReader.readLines()));
+    final tasks = parts.map(
+      (e) =>
+          e.calculateString(const StubVisualization(), inputReader.readLines()),
+    );
     await Future.wait(tasks.mapIndexed((i, e) => _watch(emit, i, e)));
   }
 

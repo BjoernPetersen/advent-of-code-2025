@@ -22,8 +22,20 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
       - uses: jdx/mise-action@v3
+      - name: Configure pub dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.temp }}/pub-cache
+            .dart_tool
+          key: pub-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pubspec.lock') }}
+      - name: Configure pub cache location
+        env:
+          PUB_CACHE: ${{ runner.temp }}/pub-cache
+        run: |
+          echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
       - name: Get dependencies
-        run: dart pub get --enforce-lockfile
+        run: flutter pub get --enforce-lockfile
       - name: Run tests
         working-directory: packages/core
         run: dart test --file-reporter json:test-results.json --coverage=.coverage .
@@ -58,7 +70,7 @@ jobs:
         run: |
           echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
       - name: Get dependencies
-        run: dart pub get --enforce-lockfile
+        run: flutter pub get --enforce-lockfile
       - name: Generate code
         working-directory: packages/solutions
         run: dart run build_runner build
@@ -101,10 +113,10 @@ jobs:
         run: |
           echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
       - name: Get dependencies
-        run: dart pub get --enforce-lockfile
+        run: flutter pub get --enforce-lockfile
       - name: Check formatting
         run: |
-          dart format packages/*/bin packages/*/lib packages/*tool --set-exit-if-changed
+          dart format packages/*/bin packages/*/lib packages/*/tool --set-exit-if-changed
 
   lint:
     name: Lint
@@ -112,9 +124,6 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v6
-      - name: Remove frontend overrides
-        # dart analyzer will just ignore our exclude for the frontend otherwise
-        run: rm frontend/analysis_options.yaml
       - uses: jdx/mise-action@v3
       - name: Configure pub dependencies cache
         uses: actions/cache@v4
@@ -129,7 +138,7 @@ jobs:
         run: |
           echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
       - name: Get dependencies
-        run: dart pub get --enforce-lockfile
+        run: flutter pub get --enforce-lockfile
       - name: Generate code
         working-directory: packages/solutions
         run: dart run build_runner build
@@ -166,8 +175,18 @@ jobs:
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: ${{ env.DART_VERSION }}
-      - run: |
-          dart pub get --enforce-lockfile
+      - name: Prepare workspace
+        env:
+          PUBSPEC_OVERRIDE: |
+            workspace:
+              - packages/cli
+              - packages/core
+              - packages/day_builder
+              - packages/solutions
+        run: |
+          printenv PUBSPEC_OVERRIDE > pubspec_overrides.yaml
+          # Not enforcing lockfile because we're excluding the Flutter frontend here
+          dart pub get
           mkdir output
       - name: Generate code
         working-directory: packages/solutions
@@ -192,11 +211,6 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
       - uses: jdx/mise-action@v3
-      - uses: jdx/mise-action@v3
-        with:
-          cache_key_prefix: 'mise-v1-flutter'
-          install_args: flutter
-          working_directory: frontend
       - name: Configure pub dependencies cache
         uses: actions/cache@v4
         with:
@@ -210,21 +224,18 @@ jobs:
         run: |
           echo "PUB_CACHE=${PUB_CACHE}" >> "$GITHUB_ENV"
       - name: Install Dart dependencies
-        run: dart pub get --enforce-lockfile
+        run: flutter pub get --enforce-lockfile
       - name: Generate code
         working-directory: packages/solutions
         run: dart run build_runner build
-      - name: Get Flutter dependencies
-        working-directory: frontend
-        run: flutter pub get
       - name: Build web package
-        working-directory: frontend
+        working-directory: packages/frontend
         run: flutter build web --wasm --base-href="/2025/"
       - name: Store build result
         uses: actions/upload-artifact@v5
         with:
           name: web-app
-          path: frontend/build/web
+          path: packages/frontend/build/web
 
   all-checks-passed:
     runs-on: ubuntu-24.04
