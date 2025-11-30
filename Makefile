@@ -8,7 +8,7 @@ watch:
 
 .PHONY: format
 format:
-	dart format packages/*/bin packages/*/lib packages/*/tool
+	dart format packages/*/bin packages/*/lib packages/*/test packages/*/tool tool
 
 upload:
 	dart run tool/sync.dart

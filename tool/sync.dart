@@ -7,5 +7,9 @@ Future<void> main(List<String> args) async {
   final env = DotEnv(includePlatformEnvironment: true, quiet: true);
   env.load();
   final inputsDir = Directory('inputs');
-  await sync(env,inputsDir: inputsDir, download: args.firstOrNull == 'download');
+  await sync(
+    env,
+    inputsDir: inputsDir,
+    download: args.firstOrNull == 'download',
+  );
 }

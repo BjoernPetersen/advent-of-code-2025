@@ -15,8 +15,9 @@ extension StreamUtils<T> on Stream<T> {
   Future<int> get count => fold(0, (previous, _) => previous + 1);
 }
 
-extension StreamSum on Stream<int> {
-  Future<int> get sum => reduce((previous, element) => previous + element);
+extension IntStreamUtils on Stream<int> {
+  Future<int> get sum => fold(0, (previous, element) => previous + element);
+  Future<int> get product => reduce((previous, element) => previous * element);
 }
 
 extension IterableUtils<T> on Iterable<T> {
