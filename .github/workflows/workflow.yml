@@ -109,6 +109,7 @@ jobs:
 
   build-cli:
     name: Build Binary
+    if: github.ref_name == github.event.repository.default_branch
     needs:
       - required-meta
       - check-format
@@ -124,9 +125,14 @@ jobs:
           - id: linux-arm64
             runner: ubuntu-24.04-arm
           - id: macos-amd64
-            runner: macos-latest
+            runner: macos-15-intel
+          - id: macos-arm64
+            runner: macos-15
           - id: win-amd64
-            runner: windows-latest
+            runner: windows-2025
+            filename: advent.exe
+          - id: win-arm64
+            runner: windows-11-arm
             filename: advent.exe
     runs-on: ${{ matrix.runner }}
     env:
@@ -200,7 +206,6 @@ jobs:
       - test-solutions
       - check-format
       - lint
-      - build-cli
       - build-frontend
     steps:
       - run: |
