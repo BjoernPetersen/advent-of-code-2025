@@ -5,7 +5,6 @@ import 'package:aoc_cli/src/visualization.dart';
 import 'package:aoc_input/input.dart';
 import 'package:args/args.dart';
 import 'package:dart_console/dart_console.dart';
-import 'package:logger/logger.dart';
 
 Future<void> main(List<String> args) async {
   final parser = ArgParser();
