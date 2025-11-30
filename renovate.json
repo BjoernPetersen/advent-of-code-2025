@@ -3,7 +3,7 @@
   "extends": [
     "local>BlindfoldedSurgery/renovate-config"
   ],
-  "packagesRules": [
+  "packageRules": [
     {
       "depNames": [
         "dart"
