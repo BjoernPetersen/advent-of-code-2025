@@ -103,7 +103,7 @@ void main() {
     });
   });
 
-  group('IntSteamUtils', () {
+  group('IntStreamUtils', () {
     group('product', () {
       test('empty', () {
         expect(Stream<int>.empty().product, throwsStateError);
