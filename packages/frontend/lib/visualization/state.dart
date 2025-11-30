@@ -7,19 +7,31 @@ import 'package:meta/meta.dart';
 @immutable
 class GridState<T> {
   final Grid<T> grid;
+  final Progress? progress;
+  final String? stepInfo;
   final String Function(T)? itemToString;
 
-  const GridState(this.grid, this.itemToString);
+  const GridState(
+    this.grid,
+    this.itemToString, {
+    required this.progress,
+    required this.stepInfo,
+  });
 }
 
 @immutable
 class VisualizationState {
+  final Duration frameDuration;
   final List<GridState<Object?>> gridStates;
 
-  const VisualizationState({required this.gridStates});
+  const VisualizationState({
+    required this.frameDuration,
+    required this.gridStates,
+  });
 
   VisualizationState addState(GridState<Object?> state) {
     return VisualizationState(
+      frameDuration: frameDuration,
       gridStates: List.unmodifiable([...gridStates, state]),
     );
   }
@@ -30,7 +42,17 @@ class VisualizationState {
   }) {
     final gridStates = this.gridStates.toList(growable: false);
     gridStates[index] = state;
-    return VisualizationState(gridStates: List.unmodifiable(gridStates));
+    return VisualizationState(
+      frameDuration: frameDuration,
+      gridStates: List.unmodifiable(gridStates),
+    );
+  }
+
+  VisualizationState updateFrameDuration(Duration frameDuration) {
+    return VisualizationState(
+      frameDuration: frameDuration,
+      gridStates: gridStates,
+    );
   }
 }
 
@@ -60,40 +82,98 @@ final class ResetVisualization extends VisualizationEvent {
   const ResetVisualization();
 }
 
+@immutable
+final class SetFrameDuration extends VisualizationEvent {
+  final Duration duration;
+
+  const SetFrameDuration(this.duration);
+}
+
 final class _GridVisualizer<I> implements Visualizer<Grid<I>> {
+  late final StreamSubscription<GridState<I>> _sub;
   final String Function(I)? _itemToString;
+  final Duration Function() _getFrameDuration;
   final StreamController<GridState<I>> _controller;
 
-  _GridVisualizer(GridState<I> gridState)
-    : _itemToString = gridState.itemToString,
-      _controller = StreamController() {
+  _GridVisualizer(
+    GridState<I> gridState, {
+    required Duration Function() getFrameDuration,
+  }) : _itemToString = gridState.itemToString,
+       _getFrameDuration = getFrameDuration,
+       _controller = StreamController() {
     _controller.add(gridState);
   }
 
   void initialize(void Function(GridState<I>) update) {
-    _controller.stream.listen(update);
+    _sub = _controller.stream.listen(update);
+  }
+
+  Future<void> dispose() {
+    return _sub.cancel();
   }
 
   @override
-  Future<void> update(Grid<I> state) async {
-    _controller.add(GridState(state, _itemToString));
+  Future<void> update(
+    Grid<I> state, {
+    String? stepInfo,
+    Progress? progress,
+  }) async {
+    _controller.add(
+      GridState(state, _itemToString, stepInfo: stepInfo, progress: progress),
+    );
+    await Future.delayed(_getFrameDuration());
   }
 }
 
 final class VisualizationBloc
     extends Bloc<VisualizationEvent, VisualizationState>
     implements Visualization {
-  VisualizationBloc() : super(const VisualizationState(gridStates: [])) {
+  final List<_GridVisualizer<Object?>> _visualizers;
+
+  VisualizationBloc()
+    : _visualizers = [],
+      super(
+        const VisualizationState(
+          frameDuration: Duration(milliseconds: 50),
+          gridStates: [],
+        ),
+      ) {
     on<_RegisterGridVisualizer>(_registerGridVisualizer);
     on<_UpdateGridState>(_updateGridState);
     on<ResetVisualization>(_reset);
+    on<SetFrameDuration>(_setFrameDuration);
+  }
+
+  @override
+  Future<void> close() async {
+    for (final visualizer in _visualizers) {
+      await visualizer.dispose();
+    }
+    _visualizers.clear();
+    await super.close();
   }
 
   Future<void> _reset(
     ResetVisualization event,
     Emitter<VisualizationState> emit,
   ) async {
-    emit(VisualizationState(gridStates: const []));
+    emit(
+      VisualizationState(
+        frameDuration: state.frameDuration,
+        gridStates: const [],
+      ),
+    );
+    for (final visualizer in _visualizers) {
+      await visualizer.dispose();
+    }
+    _visualizers.clear();
+  }
+
+  Future<void> _setFrameDuration(
+    SetFrameDuration event,
+    Emitter<VisualizationState> emit,
+  ) async {
+    emit(state.updateFrameDuration(event.duration));
   }
 
   Future<void> _updateGridState<I>(
@@ -113,6 +193,7 @@ final class VisualizationBloc
     event.visualizer.initialize(
       (s) => add(_UpdateGridState(index: index, gridState: s)),
     );
+    _visualizers.add(event.visualizer);
   }
 
   @override
@@ -120,8 +201,16 @@ final class VisualizationBloc
     Grid<I> grid, [
     String Function(I)? itemToString,
   ]) async {
-    final gridState = GridState(grid, itemToString);
-    final visualizer = _GridVisualizer(gridState);
+    final gridState = GridState(
+      grid,
+      itemToString,
+      progress: null,
+      stepInfo: null,
+    );
+    final visualizer = _GridVisualizer(
+      gridState,
+      getFrameDuration: () => state.frameDuration,
+    );
     add(_RegisterGridVisualizer(visualizer, gridState));
     return visualizer;
   }

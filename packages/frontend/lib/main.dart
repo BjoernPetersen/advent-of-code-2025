@@ -4,7 +4,10 @@ import 'package:aoc_frontend/visualization/state.dart';
 import 'package:aoc_frontend/visualization/view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:timer_builder/timer_builder.dart';
+
+const kDefaultFrameDuration = '50';
 
 void main() {
   runApp(const MyApp());
@@ -37,9 +40,87 @@ final class MyHomePage extends StatelessWidget {
         BlocProvider(create: (_) => AocBloc()),
         BlocProvider(create: (_) => VisualizationBloc()),
       ],
-      child: const Scaffold(
-        body: Padding(padding: EdgeInsets.all(5.0), child: SelectionGuide()),
+      child: Scaffold(
+        body: const Padding(
+          padding: EdgeInsets.all(5.0),
+          child: SelectionGuide(),
+        ),
       ),
+    );
+  }
+}
+
+@immutable
+final class FrameDurationTextField extends StatelessWidget {
+  const FrameDurationTextField({super.key});
+
+  String? _validate(String? value) {
+    if (value == null) {
+      return null;
+    }
+    final trimmedValue = value.trim();
+    if (trimmedValue.isEmpty) {
+      return null;
+    }
+
+    final number = int.tryParse(value);
+    if (number == null) {
+      return 'must be a valid integer';
+    } else if (number <= 0) {
+      return 'must be a positive integer';
+    } else {
+      return null;
+    }
+  }
+
+  void _onChange(BuildContext context, String? value) {
+    final controller = Provider.of<TextEditingController>(
+      context,
+      listen: false,
+    );
+    final bloc = BlocProvider.of<VisualizationBloc>(context, listen: false);
+    final error = _validate(controller.text);
+    if (error != null) {
+      controller.text = kDefaultFrameDuration;
+    }
+    final millis = int.parse(controller.text.trim());
+    bloc.add(SetFrameDuration(Duration(milliseconds: millis)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Provider.of<TextEditingController>(context);
+    return TextFormField(
+      controller: controller,
+      keyboardType: .number,
+      enableSuggestions: false,
+      validator: _validate,
+      onFieldSubmitted: (value) {
+        _onChange(context, value);
+      },
+      onTapOutside: (_) {
+        _onChange(context, controller.text);
+      },
+    );
+  }
+}
+
+@immutable
+final class FrameDurationConfig extends StatelessWidget {
+  const FrameDurationConfig({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      spacing: 5,
+      children: [
+        Text('Step duration (ms)'),
+        InheritedProvider(
+          create: (_) => TextEditingController(text: kDefaultFrameDuration),
+          dispose: (context, controller) => controller.dispose(),
+          child: const SizedBox(width: 100, child: FrameDurationTextField()),
+        ),
+      ],
     );
   }
 }
@@ -51,7 +132,11 @@ final class SelectionGuide extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AocBloc, AocState>(
       builder: (context, state) {
-        final children = <Widget>[const DaySelection(), const Divider()];
+        final children = <Widget>[
+          const FrameDurationConfig(),
+          const DaySelection(),
+          const Divider(),
+        ];
 
         if (state.day != null) {
           if (state.isMultipart) {

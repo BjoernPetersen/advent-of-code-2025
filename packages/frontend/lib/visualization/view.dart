@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:aoc_core/aoc_core.dart';
 import 'package:aoc_frontend/visualization/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,6 +24,33 @@ final class VisualizationView extends StatelessWidget {
   }
 }
 
+@immutable
+final class StepInfoView extends StatelessWidget {
+  final String? stepInfo;
+
+  const StepInfoView(this.stepInfo, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(stepInfo ?? '', textScaler: TextScaler.linear(0.8));
+  }
+}
+
+final class ProgressView extends StatelessWidget {
+  final Progress? progress;
+
+  const ProgressView(this.progress, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: min(MediaQuery.of(context).size.width, 200),
+      child: LinearProgressIndicator(value: progress?.percentage),
+    );
+  }
+}
+
+@immutable
 final class GridStateView<T> extends StatelessWidget {
   final GridState<T> gridState;
 
@@ -28,8 +58,27 @@ final class GridStateView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grid = gridState.grid;
-    final itemToString = gridState.itemToString ?? (a) => a.toString();
+    return Column(
+      mainAxisSize: .min,
+      children: [
+        ProgressView(gridState.progress),
+        StepInfoView(gridState.stepInfo),
+        Divider(),
+        AocGridView(gridState.grid, gridState.itemToString),
+      ],
+    );
+  }
+}
+
+@immutable
+final class AocGridView<T> extends StatelessWidget {
+  final Grid<T> grid;
+  final String Function(T)? itemToString;
+
+  const AocGridView(this.grid, this.itemToString, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border(
@@ -41,7 +90,10 @@ final class GridStateView<T> extends StatelessWidget {
         mainAxisSize: .min,
         children: [
           for (final row in grid.rows)
-            GridStateRow(row: row, itemToString: itemToString),
+            GridStateRow(
+              row: row,
+              itemToString: itemToString ?? (it) => it?.toString() ?? '',
+            ),
         ],
       ),
     );

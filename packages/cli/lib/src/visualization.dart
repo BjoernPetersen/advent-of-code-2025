@@ -8,8 +8,16 @@ final class _TextGridVisualizer<I> implements Visualizer<Grid<I>> {
   _TextGridVisualizer(this.sink, this.itemToString);
 
   @override
-  Future<void> update(Grid<I> state) async {
-    await sink.update(state.toString(itemToString));
+  Future<void> update(
+    Grid<I> state, {
+    String? stepInfo,
+    Progress? progress,
+  }) async {
+    await sink.update(
+      state.toString(itemToString),
+      stepInfo: stepInfo,
+      progress: progress,
+    );
   }
 }
 
@@ -19,7 +27,12 @@ final class _CliSink implements Visualizer<String> {
   _CliSink(this.console);
 
   @override
-  Future<void> update(String state) async {
+  Future<void> update(
+    String state, {
+    String? stepInfo,
+    Progress? progress,
+  }) async {
+    // TODO: show progress and stepInfo
     console.clearScreen();
     console.resetCursorPosition();
     console.writeLine('--------');
