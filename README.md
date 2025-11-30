@@ -5,7 +5,10 @@
 
 This repo contains solutions to [Advent of Code 2025][aoc] in Dart.
 
-For some reason, you can [run the solutions for your own input on the web][frontend]!
+You can get the latest pre-built binary for you platform from the [main branch workflow] artifacts.
+
+For some reason, you can also [run the solutions for your own input on the web][frontend]!
 
 [aoc]: https://adventofcode.com/2025
 [frontend]: https://aoc.bjoernpetersen.net/2025/
+[main branch workflow]: https://github.com/BjoernPetersen/advent-of-code-2025/actions/workflows/workflow.yml?query=branch%3Amain
