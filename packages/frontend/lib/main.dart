@@ -1,5 +1,7 @@
 import 'package:aoc/day.dart';
 import 'package:aoc_frontend/state.dart';
+import 'package:aoc_frontend/visualization/state.dart';
+import 'package:aoc_frontend/visualization/view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timer_builder/timer_builder.dart';
@@ -30,8 +32,11 @@ final class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => AocBloc(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => AocBloc()),
+        BlocProvider(create: (_) => VisualizationBloc()),
+      ],
       child: const Scaffold(
         body: Padding(padding: EdgeInsets.all(5.0), child: SelectionGuide()),
       ),
@@ -142,8 +147,10 @@ final class ActionArea extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: ElevatedButton(
-        onPressed: () =>
-            BlocProvider.of<AocBloc>(context).add(const OpenFilePicker()),
+        onPressed: () {
+          final bloc = BlocProvider.of<AocBloc>(context);
+          bloc.add(OpenFilePicker(BlocProvider.of<VisualizationBloc>(context)));
+        },
         child: const Text('Select input file'),
       ),
     );
@@ -166,9 +173,15 @@ final class RunningState extends StatelessWidget {
             spacing: 10,
             children: [
               for (final runState in state.runStates) RunStateView(runState),
+              const VisualizationView(),
               if (!state.isRunning)
                 IconButton(
-                  onPressed: () => bloc.add(const ClearResult()),
+                  onPressed: () {
+                    BlocProvider.of<VisualizationBloc>(
+                      context,
+                    ).add(ResetVisualization());
+                    bloc.add(const ClearResult());
+                  },
                   icon: const Icon(Icons.undo),
                 ),
             ],

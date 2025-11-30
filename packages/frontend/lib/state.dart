@@ -33,7 +33,9 @@ final class PartTwoToggled extends AocEvent {
 
 @immutable
 final class OpenFilePicker extends AocEvent {
-  const OpenFilePicker();
+  final Visualization visualization;
+
+  const OpenFilePicker(this.visualization);
 }
 
 @immutable
@@ -257,8 +259,7 @@ final class AocBloc extends Bloc<AocEvent, AocState> {
     );
 
     final tasks = parts.map(
-      (e) =>
-          e.calculateString(const StubVisualization(), inputReader.readLines()),
+      (e) => e.calculateString(event.visualization, inputReader.readLines()),
     );
     await Future.wait(tasks.mapIndexed((i, e) => _watch(emit, i, e)));
   }
