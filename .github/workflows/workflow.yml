@@ -148,6 +148,7 @@ jobs:
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: ${{ env.DART_VERSION }}
+      - uses: ./.github/actions/setup-pub-cache
       - name: Prepare workspace
         env:
           PUBSPEC_OVERRIDE: |
