@@ -26,16 +26,43 @@ final class _CliSink implements Visualizer<String> {
 
   _CliSink(this.console);
 
+  String _printProgress(Progress progress) {
+    final buffer = StringBuffer('Progress: ');
+    final filledCount = (progress.percentage * 50.0).floor();
+    for (final i in Iterable.generate(50)) {
+      if (i < filledCount) {
+        buffer.write('#');
+      } else {
+        buffer.write('.');
+      }
+    }
+    buffer.write(' (');
+    buffer.write(progress.workDone);
+    buffer.write('/');
+    buffer.write(progress.totalWork);
+    buffer.write(')');
+
+    return buffer.toString();
+  }
+
   @override
   Future<void> update(
     String state, {
     String? stepInfo,
     Progress? progress,
   }) async {
-    // TODO: show progress and stepInfo
     console.clearScreen();
     console.resetCursorPosition();
+
     console.writeLine('--------');
+
+    if (progress != null) {
+      console.writeLine(_printProgress(progress));
+    }
+    console.writeLine(stepInfo ?? '');
+
+    console.writeLine('---');
+
     for (final line in state.split('\n')) {
       console.writeLine(line);
     }
