@@ -2,5 +2,19 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>BlindfoldedSurgery/renovate-config"
+  ],
+  "packagesRules": [
+    {
+      "depNames": [
+        "dart"
+      ],
+      "allowedVersions": "<3.11"
+    },
+    {
+      "depNames": [
+        "flutter"
+      ],
+      "allowedVersions": "<3.39"
+    }
   ]
 }
