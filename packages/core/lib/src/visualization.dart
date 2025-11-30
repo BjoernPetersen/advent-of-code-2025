@@ -59,6 +59,6 @@ final class StubVisualization implements Visualization {
     Grid<I> grid, [
     String Function(I)? itemToString,
   ]) {
-    return Future.value(const StubVisualizer());
+    return Future.value(StubVisualizer());
   }
 }
