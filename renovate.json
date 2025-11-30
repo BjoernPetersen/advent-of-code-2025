@@ -5,13 +5,13 @@
   ],
   "packageRules": [
     {
-      "depNames": [
+      "matchDepNames": [
         "dart"
       ],
       "allowedVersions": "<3.11"
     },
     {
-      "depNames": [
+      "matchDepNames": [
         "flutter"
       ],
       "allowedVersions": "<3.39"
