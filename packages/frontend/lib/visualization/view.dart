@@ -5,20 +5,34 @@ import 'package:aoc_frontend/visualization/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+@immutable
 final class VisualizationView extends StatelessWidget {
-  const VisualizationView({super.key});
+  final bool isPartOne;
+
+  const VisualizationView({super.key, required this.isPartOne});
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<VisualizationBloc, VisualizationState>(
-      builder: (context, state) {
-        return Row(
-          spacing: 10,
-          mainAxisSize: .min,
-          children: [
-            for (final gridState in state.gridStates) GridStateView(gridState),
-          ],
-        );
+      buildWhen: (oldState, newState) =>
+          oldState.getPartView(isPartOne: isPartOne) !=
+          newState.getPartView(isPartOne: isPartOne),
+      builder: (context, fullState) {
+        final state = fullState.getPartView(isPartOne: isPartOne);
+
+        final children = <Widget>[];
+        final progressState = state.progressState;
+        if (progressState != null) {
+          children.add(ProgressView(progressState.progress));
+          children.add(StepInfoView(progressState.stepInfo));
+        }
+
+        final gridState = state.gridState;
+        if (gridState != null) {
+          children.add(GridStateView(gridState.state, gridState.itemToString));
+        }
+
+        return Column(mainAxisSize: .min, children: children);
       },
     );
   }
@@ -52,30 +66,10 @@ final class ProgressView extends StatelessWidget {
 
 @immutable
 final class GridStateView<T> extends StatelessWidget {
-  final GridState<T> gridState;
-
-  const GridStateView(this.gridState, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: .min,
-      children: [
-        ProgressView(gridState.progress),
-        StepInfoView(gridState.stepInfo),
-        Divider(),
-        AocGridView(gridState.grid, gridState.itemToString),
-      ],
-    );
-  }
-}
-
-@immutable
-final class AocGridView<T> extends StatelessWidget {
   final Grid<T> grid;
   final String Function(T)? itemToString;
 
-  const AocGridView(this.grid, this.itemToString, {super.key});
+  const GridStateView(this.grid, this.itemToString, {super.key});
 
   @override
   Widget build(BuildContext context) {

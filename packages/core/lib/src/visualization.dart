@@ -17,6 +17,8 @@ final class Progress {
     }
   }
 
+  Progress.indeterminateDone() : workDone = 1, totalWork = 1;
+
   Progress operator +(int delta) {
     if (delta < 0) {
       throw ArgumentError.value(delta, 'delta', 'must be a positive number');
@@ -27,10 +29,16 @@ final class Progress {
 
   Progress update(int workDone) =>
       Progress(totalWork: totalWork, workDone: workDone);
+
+  Progress done() {
+    return Progress(totalWork: totalWork, workDone: totalWork);
+  }
 }
 
+typedef ProgressPair = (Progress?, String? stepInfo);
+
 abstract interface class Visualizer<T> {
-  Future<void> update(T state, {String? stepInfo, Progress? progress});
+  Future<void> update(T state);
 }
 
 abstract interface class Visualization {
@@ -38,6 +46,8 @@ abstract interface class Visualization {
     Grid<I> grid, [
     String Function(I)? itemToString,
   ]);
+
+  Future<Visualizer<ProgressPair>> createProgressVisualizer();
 }
 
 @immutable
@@ -45,7 +55,7 @@ final class StubVisualizer<T> implements Visualizer<T> {
   const StubVisualizer();
 
   @override
-  Future<void> update(T state, {String? stepInfo, Progress? progress}) {
+  Future<void> update(T state) {
     return Future.value();
   }
 }
@@ -59,6 +69,11 @@ final class StubVisualization implements Visualization {
     Grid<I> grid, [
     String Function(I)? itemToString,
   ]) {
+    return Future.value(StubVisualizer());
+  }
+
+  @override
+  Future<Visualizer<ProgressPair>> createProgressVisualizer() {
     return Future.value(StubVisualizer());
   }
 }

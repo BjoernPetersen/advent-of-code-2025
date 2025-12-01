@@ -4,55 +4,177 @@ import 'package:aoc_core/aoc_core.dart' hide immutable;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
 
-@immutable
-class GridState<T> {
-  final Grid<T> grid;
-  final Progress? progress;
-  final String? stepInfo;
-  final String Function(T)? itemToString;
+const kDefaultFrameDuration = Duration(milliseconds: 50);
 
-  const GridState(
-    this.grid,
-    this.itemToString, {
-    required this.progress,
-    required this.stepInfo,
-  });
+@immutable
+sealed class VisualizedState<T, E extends VisualizedState<T, E>> {
+  T get state;
+
+  E updateState(T state);
 }
 
 @immutable
-class VisualizationState {
-  final Duration frameDuration;
-  final List<GridState<Object?>> gridStates;
+final class ProgressState
+    implements VisualizedState<ProgressPair, ProgressState> {
+  @override
+  final ProgressPair state;
+  Progress? get progress => state.$1;
+  String? get stepInfo => state.$2;
 
-  const VisualizationState({
+  const ProgressState({required Progress? progress, required String? stepInfo})
+    : state = (progress, stepInfo);
+  const ProgressState._fromState(this.state);
+
+  @override
+  ProgressState updateState(ProgressPair state) {
+    return ProgressState._fromState(state);
+  }
+}
+
+@immutable
+final class GridState<T> implements VisualizedState<Grid<T>, GridState<T>> {
+  @override
+  final Grid<T> state;
+  final String Function(T)? itemToString;
+
+  const GridState(this.state, this.itemToString);
+
+  @override
+  GridState<T> updateState(Grid<T> state) {
+    return GridState(state, itemToString);
+  }
+}
+
+typedef Pair<T> = (T?, T?);
+
+abstract interface class VisualizationStateView {
+  Duration get frameDuration;
+  GridState<Object?>? get gridState;
+  ProgressState? get progressState;
+}
+
+@immutable
+final class _VisualizationStateViewImpl implements VisualizationStateView {
+  final VisualizationState state;
+  final bool isPartOne;
+
+  const _VisualizationStateViewImpl(this.state, {required this.isPartOne});
+
+  @override
+  Duration get frameDuration => state.frameDuration;
+
+  @override
+  GridState<Object?>? get gridState {
+    if (isPartOne) {
+      return state.gridStates.$1;
+    } else {
+      return state.gridStates.$2;
+    }
+  }
+
+  @override
+  ProgressState? get progressState {
+    if (isPartOne) {
+      return state.progressStates.$1;
+    } else {
+      return state.progressStates.$2;
+    }
+  }
+}
+
+@immutable
+final class VisualizationState {
+  final Duration frameDuration;
+  final Pair<GridState<Object?>> gridStates;
+  final Pair<ProgressState> progressStates;
+
+  const VisualizationState._({
     required this.frameDuration,
     required this.gridStates,
+    required this.progressStates,
   });
 
-  VisualizationState addState(GridState<Object?> state) {
-    return VisualizationState(
-      frameDuration: frameDuration,
-      gridStates: List.unmodifiable([...gridStates, state]),
+  const VisualizationState.initial()
+    : this._(
+        frameDuration: kDefaultFrameDuration,
+        gridStates: (null, null),
+        progressStates: (null, null),
+      );
+
+  VisualizationState clear() {
+    return _copyWith(gridStates: (null, null), progressStates: (null, null));
+  }
+
+  VisualizationStateView getPartView({required bool isPartOne}) {
+    return _VisualizationStateViewImpl(this, isPartOne: isPartOne);
+  }
+
+  VisualizationState _copyWith({
+    Duration? frameDuration,
+    (GridState<Object?>?, GridState<Object?>?)? gridStates,
+    (ProgressState?, ProgressState?)? progressStates,
+  }) {
+    return VisualizationState._(
+      frameDuration: frameDuration ?? this.frameDuration,
+      gridStates: gridStates ?? this.gridStates,
+      progressStates: progressStates ?? this.progressStates,
     );
   }
 
-  VisualizationState updateGridState({
-    required int index,
-    required GridState state,
+  Pair<T> _updatedPair<T>(Pair<T> pair, T state, {required bool isPartOne}) {
+    if (isPartOne) {
+      return (state, pair.$2);
+    } else {
+      return (pair.$1, state);
+    }
+  }
+
+  VisualizationState addGridState(
+    GridState<Object?> state, {
+    required bool isPartOne,
   }) {
-    final gridStates = this.gridStates.toList(growable: false);
-    gridStates[index] = state;
-    return VisualizationState(
-      frameDuration: frameDuration,
-      gridStates: List.unmodifiable(gridStates),
+    if (getPartView(isPartOne: isPartOne).gridState != null) {
+      throw StateError("Can't register multiple grid visualizers per part");
+    }
+
+    return _copyWith(
+      gridStates: _updatedPair(gridStates, state, isPartOne: isPartOne),
+    );
+  }
+
+  VisualizationState updateGridState(
+    GridState state, {
+    required bool isPartOne,
+  }) {
+    return _copyWith(
+      gridStates: _updatedPair(gridStates, state, isPartOne: isPartOne),
+    );
+  }
+
+  VisualizationState addProgressState(
+    ProgressState state, {
+    required bool isPartOne,
+  }) {
+    if (getPartView(isPartOne: isPartOne).progressState != null) {
+      throw StateError("Can't register multiple progress visualizers per part");
+    }
+
+    return _copyWith(
+      progressStates: _updatedPair(progressStates, state, isPartOne: isPartOne),
+    );
+  }
+
+  VisualizationState updateProgressState(
+    ProgressState state, {
+    required bool isPartOne,
+  }) {
+    return _copyWith(
+      progressStates: _updatedPair(progressStates, state, isPartOne: isPartOne),
     );
   }
 
   VisualizationState updateFrameDuration(Duration frameDuration) {
-    return VisualizationState(
-      frameDuration: frameDuration,
-      gridStates: gridStates,
-    );
+    return _copyWith(frameDuration: frameDuration);
   }
 }
 
@@ -63,18 +185,44 @@ sealed class VisualizationEvent {
 
 @immutable
 final class _RegisterGridVisualizer<T> extends VisualizationEvent {
-  final _GridVisualizer<T> visualizer;
-  final GridState<T> gridState;
+  final bool isPartOne;
+  final _Visualizer<Grid<T>, GridState<T>> visualizer;
+  final GridState<T> state;
 
-  const _RegisterGridVisualizer(this.visualizer, this.gridState);
+  const _RegisterGridVisualizer(
+    this.visualizer,
+    this.state, {
+    required this.isPartOne,
+  });
 }
 
 @immutable
 final class _UpdateGridState<T> extends VisualizationEvent {
-  final int index;
-  final GridState<T> gridState;
+  final bool isPartOne;
+  final GridState<T> state;
 
-  const _UpdateGridState({required this.index, required this.gridState});
+  const _UpdateGridState(this.state, {required this.isPartOne});
+}
+
+@immutable
+final class _RegisterProgressVisualizer extends VisualizationEvent {
+  final bool isPartOne;
+  final _Visualizer<ProgressPair, ProgressState> visualizer;
+  final ProgressState state;
+
+  const _RegisterProgressVisualizer(
+    this.visualizer,
+    this.state, {
+    required this.isPartOne,
+  });
+}
+
+@immutable
+final class _UpdateProgressState extends VisualizationEvent {
+  final bool isPartOne;
+  final ProgressState state;
+
+  const _UpdateProgressState(this.state, {required this.isPartOne});
 }
 
 @immutable
@@ -89,22 +237,21 @@ final class SetFrameDuration extends VisualizationEvent {
   const SetFrameDuration(this.duration);
 }
 
-final class _GridVisualizer<I> implements Visualizer<Grid<I>> {
-  late final StreamSubscription<GridState<I>> _sub;
-  final String Function(I)? _itemToString;
+final class _Visualizer<I, V extends VisualizedState<I, V>>
+    implements Visualizer<I> {
+  late final StreamSubscription<V> _sub;
   final Duration Function() _getFrameDuration;
-  final StreamController<GridState<I>> _controller;
+  final StreamController<V> _controller;
+  V _lastState;
 
-  _GridVisualizer(
-    GridState<I> gridState, {
-    required Duration Function() getFrameDuration,
-  }) : _itemToString = gridState.itemToString,
-       _getFrameDuration = getFrameDuration,
-       _controller = StreamController() {
-    _controller.add(gridState);
+  _Visualizer(V state, {required Duration Function() getFrameDuration})
+    : _getFrameDuration = getFrameDuration,
+      _lastState = state,
+      _controller = StreamController() {
+    _controller.add(state);
   }
 
-  void initialize(void Function(GridState<I>) update) {
+  void initialize(void Function(V) update) {
     _sub = _controller.stream.listen(update);
   }
 
@@ -113,33 +260,26 @@ final class _GridVisualizer<I> implements Visualizer<Grid<I>> {
   }
 
   @override
-  Future<void> update(
-    Grid<I> state, {
-    String? stepInfo,
-    Progress? progress,
-  }) async {
-    _controller.add(
-      GridState(state, _itemToString, stepInfo: stepInfo, progress: progress),
-    );
+  Future<void> update(I state) async {
+    _lastState = _lastState.updateState(state);
+    _controller.add(_lastState);
     await Future.delayed(_getFrameDuration());
   }
 }
 
 final class VisualizationBloc
-    extends Bloc<VisualizationEvent, VisualizationState>
-    implements Visualization {
-  final List<_GridVisualizer<Object?>> _visualizers;
+    extends Bloc<VisualizationEvent, VisualizationState> {
+  final List<_Visualizer> _visualizers;
 
   VisualizationBloc()
     : _visualizers = [],
-      super(
-        const VisualizationState(
-          frameDuration: Duration(milliseconds: 50),
-          gridStates: [],
-        ),
-      ) {
+      super(const VisualizationState.initial()) {
     on<_RegisterGridVisualizer>(_registerGridVisualizer);
     on<_UpdateGridState>(_updateGridState);
+
+    on<_RegisterProgressVisualizer>(_registerProgressVisualizer);
+    on<_UpdateProgressState>(_updateProgressState);
+
     on<ResetVisualization>(_reset);
     on<SetFrameDuration>(_setFrameDuration);
   }
@@ -157,12 +297,7 @@ final class VisualizationBloc
     ResetVisualization event,
     Emitter<VisualizationState> emit,
   ) async {
-    emit(
-      VisualizationState(
-        frameDuration: state.frameDuration,
-        gridStates: const [],
-      ),
-    );
+    emit(state.clear());
     for (final visualizer in _visualizers) {
       await visualizer.dispose();
     }
@@ -180,38 +315,83 @@ final class VisualizationBloc
     _UpdateGridState<I> event,
     Emitter<VisualizationState> emit,
   ) async {
-    emit(state.updateGridState(index: event.index, state: event.gridState));
+    emit(state.updateGridState(event.state, isPartOne: event.isPartOne));
   }
 
   Future<void> _registerGridVisualizer<I>(
     _RegisterGridVisualizer<I> event,
     Emitter<VisualizationState> emit,
   ) async {
-    final newState = state.addState(event.gridState);
+    final newState = state.addGridState(
+      event.state,
+      isPartOne: event.isPartOne,
+    );
     emit(newState);
-    final index = newState.gridStates.length - 1;
     event.visualizer.initialize(
-      (s) => add(_UpdateGridState(index: index, gridState: s)),
+      (s) => add(_UpdateGridState(s, isPartOne: event.isPartOne)),
     );
     _visualizers.add(event.visualizer);
   }
+
+  Future<void> _updateProgressState(
+    _UpdateProgressState event,
+    Emitter<VisualizationState> emit,
+  ) async {
+    emit(state.updateProgressState(event.state, isPartOne: event.isPartOne));
+  }
+
+  Future<void> _registerProgressVisualizer(
+    _RegisterProgressVisualizer event,
+    Emitter<VisualizationState> emit,
+  ) async {
+    final newState = state.addProgressState(
+      event.state,
+      isPartOne: event.isPartOne,
+    );
+    emit(newState);
+    event.visualizer.initialize(
+      (s) => add(_UpdateProgressState(s, isPartOne: event.isPartOne)),
+    );
+    _visualizers.add(event.visualizer);
+  }
+
+  Visualization getVisualization({required bool isPartOne}) {
+    return _PartVisualization(this, isPartOne: isPartOne);
+  }
+}
+
+final class _PartVisualization implements Visualization {
+  final bool isPartOne;
+  final VisualizationBloc bloc;
+
+  _PartVisualization(this.bloc, {required this.isPartOne});
 
   @override
   Future<Visualizer<Grid<I>>> createGridVisualizer<I>(
     Grid<I> grid, [
     String Function(I)? itemToString,
   ]) async {
-    final gridState = GridState(
-      grid,
-      itemToString,
-      progress: null,
-      stepInfo: null,
-    );
-    final visualizer = _GridVisualizer(
+    final gridState = GridState(grid, itemToString);
+    final visualizer = _Visualizer<Grid<I>, GridState<I>>(
       gridState,
-      getFrameDuration: () => state.frameDuration,
+      getFrameDuration: () => bloc.state.frameDuration,
     );
-    add(_RegisterGridVisualizer(visualizer, gridState));
+    bloc.add(
+      _RegisterGridVisualizer(visualizer, gridState, isPartOne: isPartOne),
+    );
+    return visualizer;
+  }
+
+  @override
+  Future<Visualizer<ProgressPair>> createProgressVisualizer() async {
+    final state = ProgressState(progress: null, stepInfo: null);
+    final visualizer = _Visualizer<ProgressPair, ProgressState>(
+      state,
+      getFrameDuration: () => bloc.state.frameDuration,
+    );
+    bloc.add(
+      _RegisterProgressVisualizer(visualizer, state, isPartOne: isPartOne),
+    );
     return visualizer;
   }
 }

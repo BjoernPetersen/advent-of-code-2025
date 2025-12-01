@@ -33,9 +33,9 @@ final class PartTwoToggled extends AocEvent {
 
 @immutable
 final class OpenFilePicker extends AocEvent {
-  final Visualization visualization;
+  final Visualization Function({required bool isPartOne}) getVisualization;
 
-  const OpenFilePicker(this.visualization);
+  const OpenFilePicker(this.getVisualization);
 }
 
 @immutable
@@ -46,6 +46,7 @@ final class ClearResult extends AocEvent {
 @immutable
 final class RunState {
   final Part part;
+  final bool isPartOne;
   final DateTime startTime;
   final DateTime? endTime;
   final String? result;
@@ -57,13 +58,14 @@ final class RunState {
 
   const RunState._({
     required this.part,
+    required this.isPartOne,
     required this.startTime,
     required DateTime this.endTime,
     required this.result,
     required this.error,
   });
 
-  RunState.started(this.part)
+  RunState.started(this.part, {required this.isPartOne})
     : startTime = DateTime.now(),
       endTime = null,
       result = null,
@@ -75,6 +77,7 @@ final class RunState {
     }
     return RunState._(
       part: part,
+      isPartOne: isPartOne,
       startTime: startTime,
       endTime: DateTime.now(),
       result: result,
@@ -88,6 +91,7 @@ final class RunState {
     }
     return RunState._(
       part: part,
+      isPartOne: isPartOne,
       startTime: startTime,
       endTime: DateTime.now(),
       result: result,
@@ -248,18 +252,23 @@ final class AocBloc extends Bloc<AocEvent, AocState> {
     );
 
     final day = getDay(state.day!);
-    final parts = <Part>[
-      if (state.enablePartOne) day.partOne,
-      if (state.enablePartTwo) day.partTwo!,
-    ];
+    final parts = <Part, bool>{
+      if (state.enablePartOne) day.partOne: true,
+      if (state.enablePartTwo) day.partTwo!: false,
+    };
     emit(
       state.updateRunState(
-        parts.map((e) => RunState.started(e)).toList(growable: false),
+        parts.entries
+            .map((e) => RunState.started(e.key, isPartOne: e.value))
+            .toList(growable: false),
       ),
     );
 
-    final tasks = parts.map(
-      (e) => e.calculateString(event.visualization, inputReader.readLines()),
+    final tasks = parts.entries.map(
+      (e) => e.key.calculateString(
+        event.getVisualization(isPartOne: e.value),
+        inputReader.readLines(),
+      ),
     );
     await Future.wait(tasks.mapIndexed((i, e) => _watch(emit, i, e)));
   }
