@@ -1,13 +1,14 @@
 import 'package:aoc_core/aoc_core.dart';
 
 @immutable
-final class Progress {
+final class Progress extends EqualityBy<Progress, List<int>> {
   final int workDone;
   final int totalWork;
 
   double get percentage => workDone / totalWork;
 
-  Progress({this.workDone = 0, required this.totalWork}) {
+  Progress({this.workDone = 0, required this.totalWork})
+    : super((x) => [x.workDone, x.totalWork], ListEquality()) {
     if (workDone > totalWork) {
       throw ArgumentError.value(
         workDone,
@@ -17,7 +18,7 @@ final class Progress {
     }
   }
 
-  Progress.indeterminateDone() : workDone = 1, totalWork = 1;
+  Progress.indeterminateDone() : this(workDone: 1, totalWork: 1);
 
   Progress operator +(int delta) {
     if (delta < 0) {

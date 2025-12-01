@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:aoc_core/aoc_core.dart' hide immutable;
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
 
@@ -14,7 +15,7 @@ sealed class VisualizedState<T, E extends VisualizedState<T, E>> {
 }
 
 @immutable
-final class ProgressState
+final class ProgressState extends Equatable
     implements VisualizedState<ProgressPair, ProgressState> {
   @override
   final ProgressPair state;
@@ -24,6 +25,9 @@ final class ProgressState
   const ProgressState({required Progress? progress, required String? stepInfo})
     : state = (progress, stepInfo);
   const ProgressState._fromState(this.state);
+
+  @override
+  List<Object?> get props => [progress, stepInfo];
 
   @override
   ProgressState updateState(ProgressPair state) {
@@ -54,9 +58,13 @@ abstract interface class VisualizationStateView {
 }
 
 @immutable
-final class _VisualizationStateViewImpl implements VisualizationStateView {
+final class _VisualizationStateViewImpl extends Equatable
+    implements VisualizationStateView {
   final VisualizationState state;
   final bool isPartOne;
+
+  @override
+  List<Object?> get props => [gridState, progressState];
 
   const _VisualizationStateViewImpl(this.state, {required this.isPartOne});
 
@@ -83,7 +91,7 @@ final class _VisualizationStateViewImpl implements VisualizationStateView {
 }
 
 @immutable
-final class VisualizationState {
+final class VisualizationState extends Equatable {
   final Duration frameDuration;
   final Pair<GridState<Object?>> gridStates;
   final Pair<ProgressState> progressStates;
@@ -93,6 +101,13 @@ final class VisualizationState {
     required this.gridStates,
     required this.progressStates,
   });
+
+  @override
+  List<Object?> get props => [
+    frameDuration,
+    getPartView(isPartOne: true),
+    getPartView(isPartOne: false),
+  ];
 
   const VisualizationState.initial()
     : this._(
