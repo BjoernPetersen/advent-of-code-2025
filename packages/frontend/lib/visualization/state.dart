@@ -255,11 +255,11 @@ final class SetFrameDuration extends VisualizationEvent {
 final class _Visualizer<I, V extends VisualizedState<I, V>>
     implements Visualizer<I> {
   late final StreamSubscription<V> _sub;
-  final Duration Function() _getFrameDuration;
+  final Duration Function()? _getFrameDuration;
   final StreamController<V> _controller;
   V _lastState;
 
-  _Visualizer(V state, {required Duration Function() getFrameDuration})
+  _Visualizer(V state, {required Duration Function()? getFrameDuration})
     : _getFrameDuration = getFrameDuration,
       _lastState = state,
       _controller = StreamController() {
@@ -278,7 +278,10 @@ final class _Visualizer<I, V extends VisualizedState<I, V>>
   Future<void> update(I state) async {
     _lastState = _lastState.updateState(state);
     _controller.add(_lastState);
-    await Future.delayed(_getFrameDuration());
+    final getFrameDuration = _getFrameDuration;
+    if (getFrameDuration != null) {
+      await Future.delayed(getFrameDuration());
+    }
   }
 }
 
@@ -402,7 +405,7 @@ final class _PartVisualization implements Visualization {
     final state = ProgressState(progress: null, stepInfo: null);
     final visualizer = _Visualizer<ProgressPair, ProgressState>(
       state,
-      getFrameDuration: () => bloc.state.frameDuration,
+      getFrameDuration: null,
     );
     bloc.add(
       _RegisterProgressVisualizer(visualizer, state, isPartOne: isPartOne),
