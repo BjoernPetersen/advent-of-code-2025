@@ -42,6 +42,8 @@ final class PartOne extends IntPart {
     Visualization visualization,
     Stream<String> input,
   ) async {
+    final visualProgress = await visualization.createProgressVisualizer();
+
     var position = 50;
     var zeroCount = 0;
 
@@ -51,6 +53,8 @@ final class PartOne extends IntPart {
         zeroCount += 1;
       }
     }
+
+    await visualProgress.update((Progress.indeterminateDone(), null));
 
     return zeroCount;
   }
@@ -65,10 +69,16 @@ final class PartTwo extends IntPart {
     Visualization visualization,
     Stream<String> input,
   ) async {
+    final visualProgress = await visualization.createProgressVisualizer();
+
+    final instructions = await input.map(Instruction.fromString).toList();
+    var progress = Progress(totalWork: instructions.length);
+    await visualProgress.update((progress, null));
+
     var position = 50;
     var zeroCount = 0;
 
-    await for (final instruction in input.map(Instruction.fromString)) {
+    for (final (index, instruction) in instructions.indexed) {
       final hundreds = instruction.distance ~/ 100;
       final distance = instruction.distance % 100;
       zeroCount += hundreds;
@@ -84,7 +94,15 @@ final class PartTwo extends IntPart {
       } else if (position == 0) {
         zeroCount += 1;
       }
+
+      if (index > 0 && index % 100 == 0) {
+        progress += 100;
+        await visualProgress.update((progress, null));
+      }
     }
+
+    progress = progress.done();
+    await visualProgress.update((progress, null));
 
     return zeroCount;
   }

@@ -7,8 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:timer_builder/timer_builder.dart';
 
-const kDefaultFrameDuration = '50';
-
 void main() {
   runApp(const MyApp());
 }
@@ -66,8 +64,8 @@ final class FrameDurationTextField extends StatelessWidget {
     final number = int.tryParse(value);
     if (number == null) {
       return 'must be a valid integer';
-    } else if (number <= 0) {
-      return 'must be a positive integer';
+    } else if (number < 0) {
+      return 'must be greater than 0';
     } else {
       return null;
     }
@@ -81,7 +79,7 @@ final class FrameDurationTextField extends StatelessWidget {
     final bloc = BlocProvider.of<VisualizationBloc>(context, listen: false);
     final error = _validate(controller.text);
     if (error != null) {
-      controller.text = kDefaultFrameDuration;
+      controller.text = kDefaultFrameDuration.inMilliseconds.toString();
     }
     final millis = int.parse(controller.text.trim());
     bloc.add(SetFrameDuration(Duration(milliseconds: millis)));
@@ -116,7 +114,9 @@ final class FrameDurationConfig extends StatelessWidget {
       children: [
         Text('Step duration (ms)'),
         InheritedProvider(
-          create: (_) => TextEditingController(text: kDefaultFrameDuration),
+          create: (_) => TextEditingController(
+            text: kDefaultFrameDuration.inMilliseconds.toString(),
+          ),
           dispose: (context, controller) => controller.dispose(),
           child: const SizedBox(width: 100, child: FrameDurationTextField()),
         ),
@@ -234,7 +234,11 @@ final class ActionArea extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () {
           final bloc = BlocProvider.of<AocBloc>(context);
-          bloc.add(OpenFilePicker(BlocProvider.of<VisualizationBloc>(context)));
+          bloc.add(
+            OpenFilePicker(
+              BlocProvider.of<VisualizationBloc>(context).getVisualization,
+            ),
+          );
         },
         child: const Text('Select input file'),
       ),
@@ -253,24 +257,36 @@ final class RunningState extends StatelessWidget {
       child: Center(
         child: BlocBuilder(
           bloc: bloc,
-          builder: (context, AocState state) => Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 10,
-            children: [
-              for (final runState in state.runStates) RunStateView(runState),
-              const VisualizationView(),
-              if (!state.isRunning)
-                IconButton(
-                  onPressed: () {
-                    BlocProvider.of<VisualizationBloc>(
-                      context,
-                    ).add(ResetVisualization());
-                    bloc.add(const ClearResult());
-                  },
-                  icon: const Icon(Icons.undo),
-                ),
-            ],
-          ),
+          builder: (context, AocState state) {
+            final runStateViews = <Widget>[];
+            for (final runState in state.runStates) {
+              if (runStateViews.isNotEmpty) {
+                runStateViews.add(Divider());
+              }
+              runStateViews.add(RunStateView(runState));
+              runStateViews.add(
+                VisualizationView(isPartOne: runState.isPartOne),
+              );
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 10,
+              children: [
+                ...runStateViews,
+                if (!state.isRunning)
+                  IconButton(
+                    onPressed: () {
+                      BlocProvider.of<VisualizationBloc>(
+                        context,
+                      ).add(ResetVisualization());
+                      bloc.add(const ClearResult());
+                    },
+                    icon: const Icon(Icons.undo),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -317,7 +333,7 @@ final class ResultIndicator extends StatelessWidget {
         return const Icon(Icons.error, color: Colors.red);
       }
     } else {
-      return const CircularProgressIndicator();
+      return const Offstage();
     }
   }
 }
