@@ -12,7 +12,7 @@ void main() {
     group('part 1', () {
       final part = day.partOne as IntPart;
 
-      for (final (example, expectedResult) in [('instructions-1', 0)]) {
+      for (final (example, expectedResult) in [('instructions-1', 3)]) {
         test('example $example passes', () {
           final reader = getExampleReader(dayNum, example);
           expect(
@@ -26,7 +26,7 @@ void main() {
         final reader = getInputReader(dayNum);
         expect(
           part.calculate(visualization, reader.readLines()),
-          completion(0),
+          completion(1036),
         );
       });
     });
@@ -37,7 +37,7 @@ void main() {
         part = day.partTwo as IntPart;
       });
 
-      for (final (example, expectedResult) in [('instructions-1', 0)]) {
+      for (final (example, expectedResult) in [('instructions-1', 6)]) {
         test('example $example passes', () {
           final reader = getExampleReader(dayNum, example);
           expect(
@@ -51,7 +51,7 @@ void main() {
         final reader = getInputReader(dayNum);
         expect(
           part.calculate(visualization, reader.readLines()),
-          completion(0),
+          completion(6228),
         );
       });
     }, skip: day.partTwo == null);
