@@ -11,50 +11,62 @@ import 'package:aoc_core/aoc_core.dart';
 final class PartOne extends IntPart {
   const PartOne();
 
-  int getMagnitude(int n) {
-    return (log(n) * log10e).toInt();
-  }
-
   Iterable<int> bruteForceSillySums(int left, int right) sync* {
-    for (var n = left; n <right; n += 1) {
+    for (var n = left; n <= right; n += 1) {
       final s = n.toString();
       if (s.length.isOdd) {
+        n = pow(10, s.length).toInt() - 1;
         continue;
       }
       final half = s.substring(0, s.length ~/ 2);
-      if('$half$half' == s) {
-        yield n ;
+      if ('$half$half' == s) {
+        yield n;
       }
     }
   }
 
-  Iterable<int> findSillySums(int left, int right) sync* {
-    var magnitude = getMagnitude(left);
+  @override
+  Future<int> calculate(
+    Visualization visualization,
+    Stream<String> input,
+  ) async {
+    final visualProgress = await visualization.createProgressVisualizer();
+    final ranges = (await input.single).split(',').map(_parseRange);
 
-    final int first;
-    if (magnitude.isEven) {
-      magnitude += 1;
-      first =  pow(10, magnitude).toInt();
-    } else {
-      first = left;
+    var sillySum = 0;
+    for (final (left, right) in ranges) {
+      sillySum += bruteForceSillySums(left, right).sum;
     }
 
-    var multiplicator = 10 * pow(10, magnitude ~/ 2).toInt();
-    final firstHalf = first ~/ multiplicator;
+    await visualProgress.update((Progress.indeterminateDone(), null));
+    return sillySum;
+  }
+}
 
-    var current = firstHalf;
-    while (true) {
-      final value = current * multiplicator + current;
-      if (value > right || value <left) {
-        return;
+@immutable
+final class PartTwo extends IntPart {
+  const PartTwo();
+
+  bool isSilly(String s) {
+    final isEven = s.length.isEven;
+    for (var divisor = isEven ? 2 : 3; divisor <= s.length; divisor += 1) {
+      if (s.length % divisor != 0) {
+        continue;
       }
+      final prefixLength = s.length ~/ divisor;
+      final prefix = s.substring(0, prefixLength);
+      if (prefix * divisor == s) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-      yield value;
-      current += 1;
-      final newMagnitude = getMagnitude(current) * 2;
-      if (newMagnitude != magnitude) {
-        multiplicator = 10 * pow(10, newMagnitude ~/ 2).toInt();
-        magnitude = newMagnitude;
+  Iterable<int> bruteForceSillySums(int left, int right) sync* {
+    for (var n = left; n <= right; n += 1) {
+      final s = n.toString();
+      if (isSilly(s)) {
+        yield n;
       }
     }
   }

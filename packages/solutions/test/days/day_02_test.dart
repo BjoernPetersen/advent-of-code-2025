@@ -26,36 +26,36 @@ void main() {
 
       test('input passes', () {
         final reader = getInputReader(dayNum);
-        expect(part.calculate(visualization, reader.readLines()), completion(17077011375));
+        expect(
+          part.calculate(visualization, reader.readLines()),
+          completion(17077011375),
+        );
       });
     });
-    group(
-      'part 2',
-      () {
-        late final IntPart part;
+    group('part 2', () {
+      late final IntPart part;
 
-        setUpAll(() {
-          part = day.partTwo as IntPart;
+      setUpAll(() {
+        part = day.partTwo as IntPart;
+      });
+
+      for (final (example, expectedResult) in [
+        ('instructions-1', 4174379265),
+      ]) {
+        test('example $example passes', () {
+          final reader = getExampleReader(dayNum, example);
+          expect(
+            part.calculate(visualization, reader.readLines()),
+            completion(expectedResult),
+          );
         });
+      }
 
-        for (final (example, expectedResult) in [
-          ('instructions-1', 0),
-        ]) {
-          test('example $example passes', () {
-            final reader = getExampleReader(dayNum, example);
-            expect(
-              part.calculate(visualization, reader.readLines()),
-              completion(expectedResult),
-            );
-          });
-        }
-
-        test('input passes', () {
-          final reader = getInputReader(dayNum);
-          expect(part.calculate(visualization, reader.readLines()), completion(0));
-        });
-      },
-      skip: day.partTwo == null,
-    );
+      test('input passes', () {
+        final reader = getInputReader(dayNum);
+        final result = part.calculate(visualization, reader.readLines());
+        expect(result, completion(36037497037));
+      });
+    }, skip: day.partTwo == null);
   });
 }
