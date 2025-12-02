@@ -3,12 +3,13 @@
 set -eu
 
 N=$(printf '%02d' "$1")
+
+cd packages/solutions
+
 mkdir "examples/$N"
 touch "examples/$N/instructions-1.txt"
 mkdir -p "inputs"
 touch "inputs/$N.txt"
-
-cd packages/solutions
 
 for FILE in $(find lib test -type f -name "*.template")
 do
