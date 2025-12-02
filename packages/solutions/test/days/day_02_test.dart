@@ -13,7 +13,7 @@ void main() {
       final part = day.partOne as IntPart;
 
       for (final (example, expectedResult) in [
-        ('instructions-1', 0),
+        ('instructions-1', 1227775554),
       ]) {
         test('example $example passes', () {
           final reader = getExampleReader(dayNum, example);
@@ -26,7 +26,7 @@ void main() {
 
       test('input passes', () {
         final reader = getInputReader(dayNum);
-        expect(part.calculate(visualization, reader.readLines()), completion(0));
+        expect(part.calculate(visualization, reader.readLines()), completion(17077011375));
       });
     });
     group(
