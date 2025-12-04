@@ -101,10 +101,10 @@ final class PartOne extends IntPart {
         field.markAccessible();
       }
 
-      await visualGrid.update(grid);
       await visualProgress.update((++progress, null));
     }
 
+    await visualGrid.update(grid);
     return grid.squares.where((it) => it.isAccessible).count;
   }
 }
