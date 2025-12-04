@@ -35,10 +35,9 @@ final class _CliSink {
     }
     _console.writeLine(_stepInfo ?? '');
 
-    _console.writeLine('---');
-
     final grid = _grid;
     if (grid != null) {
+      _console.writeLine('---');
       _console.write(grid);
       _console.writeLine();
     }
