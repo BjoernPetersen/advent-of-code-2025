@@ -89,19 +89,24 @@ final class PartOne extends IntPart {
     Stream<String> input,
   ) async {
     final visualProgress = await visualization.createProgressVisualizer();
+    await visualProgress.update((null, 'Parsing input'));
 
     final grid = await Grid.fromStream(input, Field.fromString);
     final visualGrid = await visualization.createGridVisualizer(grid);
 
     var progress = Progress(totalWork: grid.height * grid.width);
-    await visualProgress.update((progress, null));
+    await visualProgress.update((progress, 'Finding accessible paper'));
 
     for (final field in grid.squares) {
       if (isAccessible(grid, field)) {
         field.markAccessible();
       }
 
-      await visualProgress.update((++progress, null));
+      progress++;
+      if (progress.workDone % 100 == 0) {
+        await visualProgress.update((progress, 'Finding accessible paper'));
+        await visualGrid.update(grid);
+      }
     }
 
     await visualGrid.update(grid);
