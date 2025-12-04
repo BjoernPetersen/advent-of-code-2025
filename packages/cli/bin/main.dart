@@ -21,18 +21,22 @@ Future<void> main(List<String> args) async {
     allowed: ['1', '2'],
     help: 'Which part of the day to compute (default: both)',
   );
+  parser.addFlag('visualize', abbr: 'v', defaultsTo: false);
   parser.addOption('input', abbr: 'i', help: 'The path to a custom input txt');
 
   final argResult = parser.parse(args);
   final InputReader inputReader;
   final Day day;
   final int? part;
+  final bool enableVisualization;
   try {
     final dayNum = int.parse(argResult['day']);
     day = getDay(dayNum);
 
     final partString = argResult['part'];
     part = partString == null ? null : int.parse(partString);
+
+    enableVisualization = argResult['visualize'];
 
     final input = argResult['input'];
     final File file;
@@ -48,16 +52,25 @@ Future<void> main(List<String> args) async {
     exit(1);
   }
 
-  final console = Console();
-  final visualization = CliVisualization(console);
-  final List<Future<String>> results = [];
+  final Visualization Function() getVisualization;
+  if (enableVisualization) {
+    final console = Console();
+    getVisualization = () => CliVisualization(console);
+  } else {
+    getVisualization = () => StubVisualization();
+  }
+
+  final List<String> results = [];
 
   final startTime = DateTime.now();
   print('Started at $startTime');
 
   if (part == null || part == 1) {
     results.add(
-      day.partOne.calculateString(visualization, inputReader.readLines()),
+      await day.partOne.calculateString(
+        getVisualization(),
+        inputReader.readLines(),
+      ),
     );
   }
 
@@ -69,14 +82,16 @@ Future<void> main(List<String> args) async {
     }
 
     results.add(
-      partTwo.calculateString(visualization, inputReader.readLines()),
+      await partTwo.calculateString(
+        getVisualization(),
+        inputReader.readLines(),
+      ),
     );
   }
 
-  final List<String> values = await Future.wait(results);
   final stopTime = DateTime.now();
   print(
     'Executed ${results.length} part(s) in ${stopTime.difference(startTime)}',
   );
-  print('Results: $values');
+  print('Results: $results');
 }
