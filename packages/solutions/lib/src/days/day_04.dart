@@ -37,6 +37,7 @@ final class Field {
       throw StateError('Non-accessible paper cannot be removed');
     }
     hasPaper = false;
+    isAccessible = false;
     wasRemoved = true;
   }
 
@@ -46,10 +47,7 @@ final class Field {
 
   @override
   String toString() {
-    if (wasRemoved) {
-      return 'x';
-    }
-    if (isAccessible) {
+    if (wasRemoved || isAccessible) {
       return 'x';
     }
 
@@ -139,8 +137,6 @@ final class PartTwo extends IntPart {
           field.remove();
           removalCount += 1;
         }
-
-        await visualGrid.update(grid);
       }
 
       if (removalCount == 0) {
@@ -149,6 +145,8 @@ final class PartTwo extends IntPart {
         totalRemovalCount += removalCount;
         removalCount = 0;
       }
+
+      await visualGrid.update(grid);
     }
 
     await visualProgress.update((Progress.indeterminateDone(), null));

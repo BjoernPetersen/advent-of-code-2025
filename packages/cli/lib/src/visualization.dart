@@ -52,9 +52,20 @@ final class _TextGridVisualizer<I> implements Visualizer<Grid<I>> {
 
   _TextGridVisualizer(this.sink, this.itemToString);
 
+  String monospacedItemToString(I item) {
+    final itemToString = this.itemToString ?? (e) => e.toString();
+    final raw = itemToString(item);
+    if (raw.isEmpty) {
+      return ' ';
+    }
+
+    return raw;
+  }
+
   @override
   Future<void> update(Grid<I> state) async {
-    await sink.updateGrid(state.toString(itemToString));
+    await sink.updateGrid(state.toString(monospacedItemToString));
+    await Future.delayed(const Duration(milliseconds: 50));
   }
 }
 
