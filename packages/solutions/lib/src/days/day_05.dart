@@ -50,7 +50,7 @@ final class Database {
   final List<int> ingredients;
 
   Database({required List<Range> ranges, required List<int> ingredients})
-    : this.ranges = List.unmodifiable(ranges),
+    : ranges = List.unmodifiable(ranges),
       ingredients = List.unmodifiable(ingredients);
 
   bool isFresh(int ingredient) {
