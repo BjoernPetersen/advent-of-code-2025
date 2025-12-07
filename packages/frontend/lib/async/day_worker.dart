@@ -47,7 +47,7 @@ final class _GridVisualizer<T> extends _ChannelVisualizer<Grid<T>> {
 
   @override
   Future<void> update(Grid<T> state) async {
-    final toString = _itemToString ?? (e) => e.toString();
+    final toString = _itemToString ?? (e) => e == null ? ' ' : e.toString();
     final gridLines = state.rows
         .map((row) => row.map(toString).join())
         .map((e) => e.toJS)

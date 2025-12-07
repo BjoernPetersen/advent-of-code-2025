@@ -139,7 +139,7 @@ final class AsyncDayRunner {
   });
 
   Future<String> run(Stream<String> input) async {
-    final workerFileExtension = isRunningWithWasm ? 'wasm' : 'js';
+    final workerFileExtension = isRunningWithWasm ? 'mjs' : 'js';
     final worker = Worker('workers/day-worker.$workerFileExtension'.toJS);
     final workerMessageController = StreamController<String>();
     final workerMessages = StreamQueue(workerMessageController.stream);
