@@ -31,16 +31,9 @@ extension StringResult on Part {
     Visualization visualization,
     Stream<String> input,
   ) async {
-    final String result;
-    switch (this) {
-      case StringPart():
-        final typed = this as StringPart;
-        result = await typed.calculate(visualization, input);
-      case IntPart():
-        final typed = this as IntPart;
-        final intValue = await typed.calculate(visualization, input);
-        result = intValue.toString();
-    }
-    return result;
+    return switch (this) {
+      StringPart part => await part.calculate(visualization, input),
+      IntPart part => (await part.calculate(visualization, input)).toString(),
+    };
   }
 }
