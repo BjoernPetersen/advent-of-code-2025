@@ -4,6 +4,16 @@ sealed class Field {
   final Vector position;
 
   const Field(this.position);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Field &&
+          runtimeType == other.runtimeType &&
+          position == other.position;
+
+  @override
+  int get hashCode => position.hashCode;
 }
 
 final class EmptyField extends Field {
@@ -72,37 +82,37 @@ Future<Grid<Field>> parseInput(Stream<String> input) async {
   );
 }
 
-(Set<Vector>, int) moveBeams(Grid<Field> grid, Set<Vector> beamPositions) {
-  var splitCount = 0;
-  final newPositions = <Vector>{};
-
-  for (final beam in beamPositions) {
-    final below = beam + Vector.south;
-    if (!grid.contains(below)) {
-      return const ({}, 0);
-    }
-
-    switch (grid[below]) {
-      case EmptyField field:
-        field.visit();
-        newPositions.add(field.position);
-        break;
-      case Splitter splitter:
-        splitCount += 1;
-        for (final neighbor in splitter.split(grid)) {
-          neighbor.visit();
-          newPositions.add(neighbor.position);
-        }
-        break;
-    }
-  }
-
-  return (newPositions, splitCount);
-}
-
 @immutable
 final class PartOne extends IntPart {
   const PartOne();
+
+  (Set<Vector>, int) moveBeams(Grid<Field> grid, Set<Vector> beamPositions) {
+    var splitCount = 0;
+    final newPositions = <Vector>{};
+
+    for (final beam in beamPositions) {
+      final below = beam + Vector.south;
+      if (!grid.contains(below)) {
+        return const ({}, 0);
+      }
+
+      switch (grid[below]) {
+        case EmptyField field:
+          field.visit();
+          newPositions.add(field.position);
+          break;
+        case Splitter splitter:
+          splitCount += 1;
+          for (final neighbor in splitter.split(grid)) {
+            neighbor.visit();
+            newPositions.add(neighbor.position);
+          }
+          break;
+      }
+    }
+
+    return (newPositions, splitCount);
+  }
 
   @override
   Future<int> calculate(
@@ -135,5 +145,71 @@ final class PartOne extends IntPart {
     }
 
     return splitCount;
+  }
+}
+
+final class TimelineFinder {
+  final Grid<Field> grid;
+  final Map<Vector, int> downstreamTimelines;
+
+  TimelineFinder(this.grid) : downstreamTimelines = {};
+
+  int findTimelines(final Vector position) {
+    final below = position + Vector.south;
+
+    if (!grid.contains(below)) {
+      downstreamTimelines[position] = 1;
+      return 1;
+    }
+
+    final cached = downstreamTimelines[below];
+    if (cached != null) {
+      downstreamTimelines[position] = cached;
+      return cached;
+    }
+
+    final neighbor = grid[below];
+    if (neighbor is! Splitter) {
+      final result = findTimelines(neighbor.position);
+      downstreamTimelines[position] = result;
+      return result;
+    }
+
+    final nextPositions = <EmptyField, int>{};
+    for (final emptyField in neighbor.split(grid)) {
+      nextPositions.update(emptyField, (old) => old + 1, ifAbsent: () => 1);
+    }
+
+    var timelineCount = 0;
+    for (final entry in nextPositions.entries) {
+      final result = findTimelines(entry.key.position);
+      timelineCount += entry.value * result;
+    }
+
+    downstreamTimelines[position] = timelineCount;
+    return timelineCount;
+  }
+}
+
+@immutable
+final class PartTwo extends IntPart {
+  const PartTwo();
+
+  @override
+  Future<int> calculate(
+    Visualization visualization,
+    Stream<String> input,
+  ) async {
+    final visualProgress = await visualization.createProgressVisualizer();
+    final grid = await parseInput(input);
+    final start = grid.squares
+        .where((e) => e is EmptyField && e.isStart)
+        .first
+        .position;
+
+    final timelineCount = TimelineFinder(grid).findTimelines(start);
+
+    await visualProgress.update((Progress.indeterminateDone(), null));
+    return timelineCount;
   }
 }
