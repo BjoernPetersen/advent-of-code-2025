@@ -5,6 +5,8 @@ import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'async/runner.dart';
+
 @immutable
 sealed class AocEvent {
   const AocEvent();
@@ -45,7 +47,6 @@ final class ClearResult extends AocEvent {
 
 @immutable
 final class RunState {
-  final Part part;
   final bool isPartOne;
   final DateTime startTime;
   final DateTime? endTime;
@@ -57,7 +58,6 @@ final class RunState {
   bool get isSuccessful => isDone && result != null;
 
   const RunState._({
-    required this.part,
     required this.isPartOne,
     required this.startTime,
     required DateTime this.endTime,
@@ -65,7 +65,7 @@ final class RunState {
     required this.error,
   });
 
-  RunState.started(this.part, {required this.isPartOne})
+  RunState.started({required this.isPartOne})
     : startTime = DateTime.now(),
       endTime = null,
       result = null,
@@ -76,7 +76,6 @@ final class RunState {
       throw StateError('Already done');
     }
     return RunState._(
-      part: part,
       isPartOne: isPartOne,
       startTime: startTime,
       endTime: DateTime.now(),
@@ -90,7 +89,6 @@ final class RunState {
       throw StateError('Already done');
     }
     return RunState._(
-      part: part,
       isPartOne: isPartOne,
       startTime: startTime,
       endTime: DateTime.now(),
@@ -104,7 +102,6 @@ final class RunState {
       identical(this, other) ||
       other is RunState &&
           runtimeType == other.runtimeType &&
-          part == other.part &&
           startTime == other.startTime &&
           endTime == other.endTime &&
           result == other.result &&
@@ -112,11 +109,7 @@ final class RunState {
 
   @override
   int get hashCode =>
-      part.hashCode ^
-      startTime.hashCode ^
-      endTime.hashCode ^
-      result.hashCode ^
-      error.hashCode;
+      startTime.hashCode ^ endTime.hashCode ^ result.hashCode ^ error.hashCode;
 }
 
 @immutable
@@ -251,25 +244,26 @@ final class AocBloc extends Bloc<AocEvent, AocState> {
       createRawBytesReader(file.readStream!),
     );
 
-    final day = getDay(state.day!);
-    final parts = <Part, bool>{
-      if (state.enablePartOne) day.partOne: true,
-      if (state.enablePartTwo) day.partTwo!: false,
+    final parts = <bool>{
+      if (state.enablePartOne) true,
+      if (state.enablePartTwo) false,
     };
     emit(
       state.updateRunState(
-        parts.entries
-            .map((e) => RunState.started(e.key, isPartOne: e.value))
+        parts
+            .map((isPartOne) => RunState.started(isPartOne: isPartOne))
             .toList(growable: false),
       ),
     );
 
-    final tasks = parts.entries.map(
-      (e) => e.key.calculateString(
-        event.getVisualization(isPartOne: e.value),
-        inputReader.readLines(),
-      ),
-    );
+    final tasks = parts.map((isPartOne) {
+      final runner = AsyncDayRunner(
+        day: state.day!,
+        isPartOne: isPartOne,
+        visualization: event.getVisualization(isPartOne: isPartOne),
+      );
+      return runner.run(inputReader.readLines());
+    });
     await Future.wait(tasks.mapIndexed((i, e) => _watch(emit, i, e)));
   }
 

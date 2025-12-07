@@ -196,6 +196,11 @@ jobs:
       - name: Generate code
         working-directory: packages/solutions
         run: dart run build_runner build
+      - name: Generate web worker code
+        working-directory: packages/frontend
+        run: |
+          dart compile js lib/async/day_worker.dart -o web/workers/day-worker.js -O2
+          dart compile wasm lib/async/day_worker.dart -o web/workers/day-worker.wasm
       - name: Build web package
         working-directory: packages/frontend
         run: flutter build web --wasm --base-href="/2025/"
