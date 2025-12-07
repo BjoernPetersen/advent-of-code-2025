@@ -5,8 +5,6 @@ import 'package:async/async.dart';
 import 'package:web/web.dart';
 import 'package:aoc/day.dart';
 
-const isRunningWithWasm = bool.fromEnvironment('dart.tool.dart2wasm');
-
 abstract base class _VisualizerBridge<T> {
   final MessagePort _port;
   final StreamController<MessageEvent> _controller;
@@ -139,8 +137,7 @@ final class AsyncDayRunner {
   });
 
   Future<String> run(Stream<String> input) async {
-    final workerFileExtension = isRunningWithWasm ? 'mjs' : 'js';
-    final worker = Worker('workers/day-worker.$workerFileExtension'.toJS);
+    final worker = Worker('workers/day-worker.js'.toJS);
     final workerMessageController = StreamController<String>();
     final workerMessages = StreamQueue(workerMessageController.stream);
 
