@@ -55,7 +55,7 @@ final class Field {
       return '@';
     }
 
-    return '';
+    return ' ';
   }
 }
 
