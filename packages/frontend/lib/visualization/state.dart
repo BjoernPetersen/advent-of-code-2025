@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:aoc_core/aoc_core.dart' hide immutable;
+import 'package:aoc_core/aoc_core.dart' hide immutable, Pair;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';

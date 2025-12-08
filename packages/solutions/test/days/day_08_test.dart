@@ -1,5 +1,6 @@
 import 'package:aoc/day.dart';
 import 'package:test/test.dart';
+import 'package:aoc/src/days/day_08.dart' as day8;
 
 import '../input_helper.dart';
 
@@ -10,13 +11,17 @@ void main() {
 
   group('day $dayNum', () {
     group('part 1', () {
-      final part = day.partOne as IntPart;
+      final part = day.partOne as day8.PartOne;
 
-      for (final (example, expectedResult) in [('instructions-1', 0)]) {
+      for (final (example, expectedResult) in [('instructions-1', 40)]) {
         test('example $example passes', () {
           final reader = getExampleReader(dayNum, example);
           expect(
-            part.calculate(visualization, reader.readLines()),
+            part.calculate(
+              visualization,
+              reader.readLines(),
+              connectionCount: 10,
+            ),
             completion(expectedResult),
           );
         });
@@ -26,7 +31,7 @@ void main() {
         final reader = getInputReader(dayNum);
         expect(
           part.calculate(visualization, reader.readLines()),
-          completion(0),
+          completion(175440),
         );
       });
     });
