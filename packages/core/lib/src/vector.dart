@@ -1,11 +1,11 @@
-import 'package:meta/meta.dart';
-
 import 'dart:math';
+
+import 'package:meta/meta.dart';
 
 import 'bounds.dart';
 
 @immutable
-class Vector {
+final class Vector {
   static const Vector zero = Vector();
   static const Vector north = Vector(y: -1);
   static const Vector east = Vector(x: 1);
@@ -107,5 +107,64 @@ class Vector {
   @override
   String toString() {
     return '($x, $y)';
+  }
+}
+
+@immutable
+final class Vector3 {
+  static const Vector3 zero = Vector3();
+
+  final int x;
+  final int y;
+  final int z;
+
+  const Vector3({this.x = 0, this.y = 0, this.z = 0});
+
+  Vector3 operator +(Vector3 other) {
+    return Vector3(x: x + other.x, y: y + other.y, z: z + other.z);
+  }
+
+  Vector3 operator -(Vector3 other) {
+    return Vector3(x: x - other.x, y: y - other.y, z: z - other.z);
+  }
+
+  Vector3 operator *(int scalar) {
+    return Vector3(x: x * scalar, y: y * scalar, z: z * scalar);
+  }
+
+  Vector3 operator -() {
+    return Vector3(x: -x, y: -y, z: -z);
+  }
+
+  Vector3 abs() {
+    return Vector3(x: x.abs(), y: y.abs(), z: z.abs());
+  }
+
+  double norm(int p) {
+    final sum = pow(x.abs(), p) + pow(y.abs(), p) + pow(z.abs(), p);
+
+    if (p == 2) {
+      // Special case for Euclidean norm in hopes that sqrt is faster than pow(n, 1/2)
+      return sqrt(sum);
+    }
+
+    return pow(sum, 1 / p) as double;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Vector3 &&
+          runtimeType == other.runtimeType &&
+          x == other.x &&
+          y == other.y &&
+          z == other.z;
+
+  @override
+  int get hashCode => x.hashCode ^ y.hashCode ^ z.hashCode;
+
+  @override
+  String toString() {
+    return '($x, $y, $z)';
   }
 }
