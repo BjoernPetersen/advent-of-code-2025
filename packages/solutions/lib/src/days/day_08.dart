@@ -27,38 +27,32 @@ Iterable<Pair<T>> generatePairs<T>(List<T> list) sync* {
 }
 
 final class Circuit {
-  final Set<Vector3> junctions;
-  final Set<Pair<Vector3>> connections;
+  final Set<Vector3> _junctions;
 
-  int get size => junctions.length;
+  int get size => _junctions.length;
 
-  Circuit._(this.junctions, this.connections);
+  Circuit._(this._junctions);
 
   factory Circuit.initial(Pair<Vector3> first) {
     final (left, right) = first;
-    return Circuit._({left, right}, {first});
+    return Circuit._({left, right});
   }
 
-  void add(Pair<Vector3> pair) {
-    if (!connections.add(pair)) {
-      return;
-    }
-    final (left, right) = pair;
-    junctions.add(left);
-    junctions.add(right);
+  void add(Vector3 junction) {
+    _junctions.add(junction);
   }
 
-  void merge(Circuit other, Pair<Vector3> newPair) {
+  void merge(Circuit other, Vector3 newJunction) {
     if (other.size > size) {
       throw ArgumentError();
     }
 
-    other.connections.forEach(add);
-    add(newPair);
+    other._junctions.forEach(_junctions.add);
+    add(newJunction);
   }
 
   bool contains(Vector3 junction) {
-    return junctions.contains(junction);
+    return _junctions.contains(junction);
   }
 }
 
@@ -85,18 +79,21 @@ void connectPair(List<Circuit> circuits, Pair<Vector3> pair) {
     case (null, null):
       circuits.add(Circuit.initial(pair));
       break;
-    case (null, Circuit some) || (Circuit some, null):
-      some.add(pair);
+    case (null, Circuit some):
+      some.add(left);
+      break;
+    case (Circuit some, null):
+      some.add(right);
       break;
     case (Circuit a, Circuit b):
       if (a == b) {
-        a.add(pair);
+        break;
       } else if (a.size >= b.size) {
         circuits.remove(b);
-        a.merge(b, pair);
+        a.merge(b, right);
       } else {
         circuits.remove(a);
-        b.merge(a, pair);
+        b.merge(a, left);
       }
       break;
   }
