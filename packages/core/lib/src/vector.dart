@@ -7,6 +7,7 @@ import 'bounds.dart';
 @immutable
 final class Vector {
   static const Vector zero = Vector();
+  static const Vector one = Vector(x: 1, y: 1);
   static const Vector north = Vector(y: -1);
   static const Vector east = Vector(x: 1);
   static const Vector south = Vector(y: 1);
