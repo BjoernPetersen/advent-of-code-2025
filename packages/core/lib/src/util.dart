@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 typedef Pair<T> = (T, T);
@@ -12,6 +13,19 @@ extension CharIterable on String {
 
 extension StreamUtils<T> on Stream<T> {
   Future<int> get count => fold(0, (previous, _) => previous + 1);
+
+    Stream<(T, T)> zipWithNext() async* {
+    final iterator = StreamIterator(this);
+    if (!await iterator.moveNext()) {
+      return;
+    }
+    var last = iterator.current;
+
+    while (await iterator.moveNext()) {
+      yield (last, iterator.current);
+      last = iterator.current;
+    }
+  }
 }
 
 extension IntStreamUtils on Stream<int> {
