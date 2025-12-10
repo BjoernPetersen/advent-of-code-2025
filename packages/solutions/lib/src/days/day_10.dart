@@ -135,7 +135,7 @@ int findSolution<T>(
   required final State<T> initial,
   required final State<T> target,
   required final State<T> Function(Button, State<T>) apply,
-      required bool Function (State<T>) isValidState,
+  required bool Function(State<T>) isValidState,
 }) {
   final seen = <State<T>, int>{initial: 0};
 
@@ -155,7 +155,7 @@ int findSolution<T>(
 
       seen[neighbor] = currentCost + 1;
 
-      if(!isValidState( neighbor)) {
+      if (!isValidState(neighbor)) {
         continue;
       }
 
@@ -171,6 +171,76 @@ int findSolution<T>(
   }
 
   return seen[current]!;
+}
+
+int getPathLength<T>({
+  required final State<T> initial,
+  required final State<T> target,
+  required Map<State<T>, State<T>> cameFrom,
+}) {
+  var count = 0;
+  State<T>? current = cameFrom[target];
+  while (current != null) {
+    current = cameFrom[current];
+    count += 1;
+  }
+
+  return count;
+}
+
+int findStarSolution<T>(
+  final MachineManual manual, {
+  required final State<T> initial,
+  required final State<T> target,
+  required final State<T> Function(Button, State<T>) apply,
+  required bool Function(State<T>) isValidState,
+  required int Function(State<T>, State<T>) difference,
+}) {
+  final fScore = <State<T>, int>{initial: difference(target, initial)};
+  final gScore = <State<T>, int>{initial: 0};
+  final cameFrom = <State<T>, State<T>>{};
+
+  final unvisited = OrderedSet.comparing<State<T>>(
+    compare: (a, b) => fScore[a]!.compareTo(fScore[b]!),
+  );
+  unvisited.add(initial);
+
+  while (unvisited.isNotEmpty) {
+    final current = unvisited.first;
+    unvisited.remove(current);
+
+    if (current == target) {
+      return getPathLength(
+        initial: initial,
+        target: target,
+        cameFrom: cameFrom,
+      );
+    }
+
+    for (final button in manual.buttons) {
+      final neighbor = apply(button, current);
+
+      if (!isValidState(neighbor)) {
+        continue;
+      }
+
+      final neighborCost = gScore[current]! + 1;
+      final previousCost = gScore[neighbor];
+      if (previousCost == null || neighborCost < previousCost) {
+        if (previousCost != null) {
+          unvisited.remove(neighbor);
+        }
+
+        cameFrom[neighbor] = current;
+        gScore[neighbor] = neighborCost;
+        fScore[neighbor] = neighborCost + difference(target, neighbor);
+
+        unvisited.add(neighbor);
+      }
+    }
+  }
+
+  throw StateError('no path found');
 }
 
 @immutable
@@ -195,7 +265,7 @@ final class PartOne extends IntPart {
         initial: initial,
         target: m.targetIndicators,
         apply: (b, s) => b.pressIndicator(s),
-        isValidState: ( _) => true,
+        isValidState: (_) => true,
       );
     }).toList();
 
@@ -214,25 +284,39 @@ final class PartTwo extends IntPart {
     Stream<String> input,
   ) async {
     final visualProgress = await visualization.createProgressVisualizer();
+    await visualProgress.update((null, 'Parsing input'));
 
-    final manuals = input.map(MachineManual.fromString);
-    final solutions = await manuals.map((m) {
+    final manuals = await input.map(MachineManual.fromString).toList();
+
+    var progress = Progress(totalWork: manuals.length);
+    await visualProgress.update((progress, 'Calculating solutions'));
+
+    var sum = 0;
+    for (final manual in manuals) {
       final initial = State.unmodifiable(
-        Iterable.generate(m.targetJoltages.length, (_) => 0),
+        Iterable.generate(manual.targetJoltages.length, (_) => 0),
       );
-      return findSolution(
-        m,
+      sum += findStarSolution(
+        manual,
         initial: initial,
-        target: m.targetJoltages,
+        target: manual.targetJoltages,
         apply: (b, s) => b.pressJoltage(s),
         isValidState: (s) => s.indexedItems.every((indexed) {
           final (index, item) = indexed;
-          return item <= m.targetJoltages[index];
+          return item <= manual.targetJoltages[index];
         }),
+        difference: (a, b) {
+          var sum = 0;
+          for (final (index, item) in a.indexedItems) {
+            sum += (item - b[index]).abs();
+          }
+          return sum;
+        },
       );
-    }).toList();
 
-    await visualProgress.update((Progress.indeterminateDone(), null));
-    return solutions.sum;
+      await visualProgress.update((++progress, 'Calculating solutions'));
+    }
+
+    return sum;
   }
 }
