@@ -1,58 +1,122 @@
 import 'package:aoc_core/aoc_core.dart';
-
+import 'package:ordered_set/ordered_set.dart';
 
 @immutable
-final class MachineManual {
-  static final _regexIndicator =  RegExp(r'\[([.#]+)]');
-  static final _regexButtons = RegExp(r'\((\d+(?:,\d+)*)\)');
-  static final _regexJoltage = RegExp(r'\{(\d+(?:,\d+)*)\}');
+final class State {
+  static const _equality = ListEquality<bool>();
 
   final List<bool> indicators;
-  final List<List<int>> buttons;
-  final List<int> joltages;
 
- const MachineManual._({required this.indicators, required this.buttons, required this.joltages});
+  int get length => indicators.length;
 
- factory MachineManual.fromString(String line) {
-   final indicatorMatch = _regexIndicator.firstMatch(line);
-   final buttonMatches = _regexButtons.allMatches(line);
-   final joltageMatch = _regexJoltage.firstMatch(line);
+  State.unmodifiable(Iterable<bool> indicators)
+    : indicators = List.unmodifiable(indicators);
 
-   if(indicatorMatch == null || joltageMatch == null) {
-     throw ArgumentError('Invalid formatting');
-   }
+  @override
+  bool operator ==(Object other) =>
+      runtimeType == other.runtimeType &&
+      _equality.equals(indicators, (other as State).indicators);
 
-   final indicators = List<bool>.unmodifiable(indicatorMatch.group(1)!.chars.map((c) => c == '#'))   ;
-   final joltages = List<int>.unmodifiable(joltageMatch.group(1)!.split(',').map(int.parse));
+  @override
+  int get hashCode => _equality.hash(indicators);
 
-   final buttons = List<List<int>>.unmodifiable(buttonMatches.map((buttonMatch) => List<int>.unmodifiable(buttonMatch.group(1)!.split(',').map(int.parse))));
+  @override
+  String toString() {
+    final buffer = StringBuffer();
+    buffer.write('[');
+    indicators.map((b) => b ? '#' : '.').forEach(buffer.write);
+    buffer.write('] ');
+    return buffer.toString();
+  }
+}
 
-   if(buttons.isEmpty) {
-     throw ArgumentError('No button wirings found');
-   }
+@immutable
+final class Button {
+  final Set<int> _wires;
 
-   return MachineManual._(indicators: indicators, buttons:buttons, joltages: joltages);
+  Iterable<int> get wires => _wires;
+
+  const Button(this._wires);
+
+  State press(State state) {
+    return State.unmodifiable(
+      state.indicators.mapIndexed(
+        (index, pre) => _wires.contains(index) ? !pre : pre,
+      ),
+    );
   }
 
   @override
   String toString() {
-   final buffer = StringBuffer();
+    return '(${wires.join(",")})';
+  }
+}
 
-   buffer.write('[');
-   indicators.map((b) => b ? '#' : '.').forEach(buffer.write);
-   buffer.write('] ');
+@immutable
+final class MachineManual {
+  static final _regexIndicator = RegExp(r'\[([.#]+)]');
+  static final _regexButtons = RegExp(r'\((\d+(?:,\d+)*)\)');
+  static final _regexJoltage = RegExp(r'\{(\d+(?:,\d+)*)\}');
 
-   buttons.map((b) => b.join(',')).forEach((b) {
-     buffer.write('(');
-     buffer.write(b);
-     buffer.write(') ');
-   });
+  final State target;
+  final List<Button> buttons;
+  final List<int> joltages;
 
-   buffer.write('{');
-   buffer.write(joltages.join(','));
-   buffer.write('}');
+  int get indicatorCount => target.length;
 
-   return buffer.toString();
+  const MachineManual._({
+    required this.target,
+    required this.buttons,
+    required this.joltages,
+  });
+
+  factory MachineManual.fromString(String line) {
+    final indicatorMatch = _regexIndicator.firstMatch(line);
+    final buttonMatches = _regexButtons.allMatches(line);
+    final joltageMatch = _regexJoltage.firstMatch(line);
+
+    if (indicatorMatch == null || joltageMatch == null) {
+      throw ArgumentError('Invalid formatting');
+    }
+
+    final indicators = State.unmodifiable(
+      indicatorMatch.group(1)!.chars.map((c) => c == '#'),
+    );
+    final joltages = List<int>.unmodifiable(
+      joltageMatch.group(1)!.split(',').map(int.parse),
+    );
+
+    final buttons = List<Button>.unmodifiable(
+      buttonMatches
+          .map((buttonMatch) => buttonMatch.group(1)!.split(',').map(int.parse))
+          .map(Set.unmodifiable)
+          .map(Button.new),
+    );
+
+    if (buttons.isEmpty) {
+      throw ArgumentError('No button wirings found');
+    }
+
+    return MachineManual._(
+      target: indicators,
+      buttons: buttons,
+      joltages: joltages,
+    );
+  }
+
+  @override
+  String toString() {
+    final buffer = StringBuffer();
+
+    buffer.write(target.toString());
+
+    buttons.forEach(buffer.write);
+
+    buffer.write('{');
+    buffer.write(joltages.join(','));
+    buffer.write('}');
+
+    return buffer.toString();
   }
 }
 
@@ -60,9 +124,63 @@ final class MachineManual {
 final class PartOne extends IntPart {
   const PartOne();
 
+  bool findPath({
+    required MachineManual manual,
+    required State current,
+    required Map<State, int> seen,
+  }) {
+    if (seen.containsKey(manual.target)) {
+      return true;
+    }
+
+    final currentCost = seen[current]!;
+
+    for (final button in manual.buttons) {
+      final target = button.press(current);
+      final previousCost = seen[target];
+      if (previousCost != null && previousCost <= currentCost + 1) {
+        continue;
+      }
+
+      seen[target] = currentCost + 1;
+      final found = findPath(manual: manual, current: current, seen: seen);
+      if (found) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   int findSolution(MachineManual manual) {
-    // TODO: span a graph and dijkstra it?
-    return 1;
+    final initial = State.unmodifiable(
+      Iterable.generate(manual.indicatorCount, (_) => false),
+    );
+    final seen = <State, int>{initial: 0};
+
+    final unvisited = OrderedSet.comparing<State>(
+      compare: (a, b) => seen[a]!.compareTo(seen[b]!),
+    );
+
+    var current = initial;
+    while (current != manual.target) {
+      final currentCost = seen[current]!;
+
+      for (final button in manual.buttons) {
+        final neighbor = button.press(current);
+        if (seen.containsKey(neighbor)) {
+          continue;
+        }
+
+        seen[neighbor] = currentCost + 1;
+        unvisited.add(neighbor);
+      }
+
+      current = unvisited.first;
+      unvisited.remove(current);
+    }
+
+    return seen[current]!;
   }
 
   @override
