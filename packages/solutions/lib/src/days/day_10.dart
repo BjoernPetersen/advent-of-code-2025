@@ -2,29 +2,35 @@ import 'package:aoc_core/aoc_core.dart';
 import 'package:ordered_set/ordered_set.dart';
 
 @immutable
-final class State {
-  static const _equality = ListEquality<bool>();
+final class State<T> {
+  final _equality = ListEquality<T>();
 
-  final List<bool> indicators;
+  final List<T> _data;
 
-  int get length => indicators.length;
+  Iterable<(int, T)> get indexedItems => _data.indexed;
 
-  State.unmodifiable(Iterable<bool> indicators)
-    : indicators = List.unmodifiable(indicators);
+  int get length => _data.length;
+
+  T operator [](int index) {
+    return _data[index];
+  }
+
+  State.unmodifiable(Iterable<T> indicators)
+    : _data = List.unmodifiable(indicators);
 
   @override
   bool operator ==(Object other) =>
       runtimeType == other.runtimeType &&
-      _equality.equals(indicators, (other as State).indicators);
+      _equality.equals(_data, (other as State<T>)._data);
 
   @override
-  int get hashCode => _equality.hash(indicators);
+  int get hashCode => _equality.hash(_data);
 
   @override
   String toString() {
     final buffer = StringBuffer();
     buffer.write('[');
-    indicators.map((b) => b ? '#' : '.').forEach(buffer.write);
+    buffer.write(_data.join(','));
     buffer.write('] ');
     return buffer.toString();
   }
@@ -38,10 +44,18 @@ final class Button {
 
   const Button(this._wires);
 
-  State press(State state) {
+  State<bool> pressIndicator(State<bool> state) {
     return State.unmodifiable(
-      state.indicators.mapIndexed(
+      state._data.mapIndexed(
         (index, pre) => _wires.contains(index) ? !pre : pre,
+      ),
+    );
+  }
+
+  State<int> pressJoltage(State<int> state) {
+    return State.unmodifiable(
+      state._data.mapIndexed(
+        (index, pre) => _wires.contains(index) ? pre + 1 : pre,
       ),
     );
   }
@@ -58,16 +72,14 @@ final class MachineManual {
   static final _regexButtons = RegExp(r'\((\d+(?:,\d+)*)\)');
   static final _regexJoltage = RegExp(r'\{(\d+(?:,\d+)*)\}');
 
-  final State target;
+  final State<bool> targetIndicators;
   final List<Button> buttons;
-  final List<int> joltages;
-
-  int get indicatorCount => target.length;
+  final State<int> targetJoltages;
 
   const MachineManual._({
-    required this.target,
+    required this.targetIndicators,
     required this.buttons,
-    required this.joltages,
+    required this.targetJoltages,
   });
 
   factory MachineManual.fromString(String line) {
@@ -82,7 +94,7 @@ final class MachineManual {
     final indicators = State.unmodifiable(
       indicatorMatch.group(1)!.chars.map((c) => c == '#'),
     );
-    final joltages = List<int>.unmodifiable(
+    final joltages = State.unmodifiable(
       joltageMatch.group(1)!.split(',').map(int.parse),
     );
 
@@ -98,9 +110,9 @@ final class MachineManual {
     }
 
     return MachineManual._(
-      target: indicators,
+      targetIndicators: indicators,
       buttons: buttons,
-      joltages: joltages,
+      targetJoltages: joltages,
     );
   }
 
@@ -108,80 +120,62 @@ final class MachineManual {
   String toString() {
     final buffer = StringBuffer();
 
-    buffer.write(target.toString());
+    buffer.write(targetIndicators);
 
     buttons.forEach(buffer.write);
 
-    buffer.write('{');
-    buffer.write(joltages.join(','));
-    buffer.write('}');
+    buffer.write(targetJoltages);
 
     return buffer.toString();
   }
 }
 
-@immutable
-final class PartOne extends IntPart {
-  const PartOne();
+int findSolution<T>(
+  final MachineManual manual, {
+  required final State<T> initial,
+  required final State<T> target,
+  required final State<T> Function(Button, State<T>) apply,
+      required bool Function (State<T>) isValidState,
+}) {
+  final seen = <State<T>, int>{initial: 0};
 
-  bool findPath({
-    required MachineManual manual,
-    required State current,
-    required Map<State, int> seen,
-  }) {
-    if (seen.containsKey(manual.target)) {
-      return true;
-    }
+  final unvisited = OrderedSet.comparing<State<T>>(
+    compare: (a, b) => seen[a]!.compareTo(seen[b]!),
+  );
 
+  var current = initial;
+  while (current != target) {
     final currentCost = seen[current]!;
 
     for (final button in manual.buttons) {
-      final target = button.press(current);
-      final previousCost = seen[target];
-      if (previousCost != null && previousCost <= currentCost + 1) {
+      final neighbor = apply(button, current);
+      if (seen.containsKey(neighbor)) {
         continue;
       }
 
-      seen[target] = currentCost + 1;
-      final found = findPath(manual: manual, current: current, seen: seen);
-      if (found) {
-        return true;
+      seen[neighbor] = currentCost + 1;
+
+      if(!isValidState( neighbor)) {
+        continue;
+      }
+
+      unvisited.add(neighbor);
+
+      if (neighbor == target) {
+        return currentCost + 1;
       }
     }
 
-    return false;
+    current = unvisited.first;
+    unvisited.remove(current);
   }
 
-  int findSolution(MachineManual manual) {
-    final initial = State.unmodifiable(
-      Iterable.generate(manual.indicatorCount, (_) => false),
-    );
-    final seen = <State, int>{initial: 0};
+  return seen[current]!;
+}
 
-    final unvisited = OrderedSet.comparing<State>(
-      compare: (a, b) => seen[a]!.compareTo(seen[b]!),
-    );
-
-    var current = initial;
-    while (current != manual.target) {
-      final currentCost = seen[current]!;
-
-      for (final button in manual.buttons) {
-        final neighbor = button.press(current);
-        if (seen.containsKey(neighbor)) {
-          continue;
-        }
-
-        seen[neighbor] = currentCost + 1;
-        unvisited.add(neighbor);
-      }
-
-      current = unvisited.first;
-      unvisited.remove(current);
-    }
-
-    return seen[current]!;
-  }
+@immutable
+final class PartOne extends IntPart {
+  const PartOne();
 
   @override
   Future<int> calculate(
@@ -191,7 +185,52 @@ final class PartOne extends IntPart {
     final visualProgress = await visualization.createProgressVisualizer();
 
     final manuals = input.map(MachineManual.fromString);
-    final solutions = await manuals.map(findSolution).toList();
+
+    final solutions = await manuals.map((m) {
+      final initial = State.unmodifiable(
+        Iterable.generate(m.targetIndicators.length, (_) => false),
+      );
+      return findSolution(
+        m,
+        initial: initial,
+        target: m.targetIndicators,
+        apply: (b, s) => b.pressIndicator(s),
+        isValidState: ( _) => true,
+      );
+    }).toList();
+
+    await visualProgress.update((Progress.indeterminateDone(), null));
+    return solutions.sum;
+  }
+}
+
+@immutable
+final class PartTwo extends IntPart {
+  const PartTwo();
+
+  @override
+  Future<int> calculate(
+    Visualization visualization,
+    Stream<String> input,
+  ) async {
+    final visualProgress = await visualization.createProgressVisualizer();
+
+    final manuals = input.map(MachineManual.fromString);
+    final solutions = await manuals.map((m) {
+      final initial = State.unmodifiable(
+        Iterable.generate(m.targetJoltages.length, (_) => 0),
+      );
+      return findSolution(
+        m,
+        initial: initial,
+        target: m.targetJoltages,
+        apply: (b, s) => b.pressJoltage(s),
+        isValidState: (s) => s.indexedItems.every((indexed) {
+          final (index, item) = indexed;
+          return item <= m.targetJoltages[index];
+        }),
+      );
+    }).toList();
 
     await visualProgress.update((Progress.indeterminateDone(), null));
     return solutions.sum;
