@@ -1,13 +1,13 @@
 .PHONY: worker
-worker:
+worker: gen
 	cd packages/frontend && dart compile js lib/async/day_worker.dart -o web/workers/day-worker.js -O2
 
 .PHONY: gen
-gen: worker
+gen:
 	cd packages/solutions && dart run build_runner build --delete-conflicting-outputs
 
 .PHONY: watch
-watch: worker
+watch:
 	cd packages/solutions && dart run build_runner watch --delete-conflicting-outputs
 
 .PHONY: format
