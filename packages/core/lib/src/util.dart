@@ -14,7 +14,7 @@ extension CharIterable on String {
 extension StreamUtils<T> on Stream<T> {
   Future<int> get count => fold(0, (previous, _) => previous + 1);
 
-    Stream<(T, T)> zipWithNext() async* {
+  Stream<(T, T)> zipWithNext() async* {
     final iterator = StreamIterator(this);
     if (!await iterator.moveNext()) {
       return;

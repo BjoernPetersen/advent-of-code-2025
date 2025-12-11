@@ -52,7 +52,7 @@ void main() {
         final reader = getInputReader(dayNum);
         expect(
           part.calculate(visualization, reader.readLines()),
-          completion(0),
+          completion(allOf(greaterThan(1574349244), 0)),
         );
       });
     }, skip: day.partTwo == null);
