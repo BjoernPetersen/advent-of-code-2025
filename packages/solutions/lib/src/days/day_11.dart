@@ -37,15 +37,10 @@ final class Node {
 
 @immutable
 final class Graph {
-  final Node start;
   final Node end;
   final Map<String, Node> _nodes;
 
-  Graph({
-    required this.start,
-    required this.end,
-    required Map<String, Node> nodes,
-  }) : _nodes = nodes;
+  Graph({required this.end, required Map<String, Node> nodes}) : _nodes = nodes;
 
   Node operator [](String name) {
     final result = _nodes[name];
@@ -57,7 +52,6 @@ final class Graph {
 }
 
 Future<Graph> parseInput(Stream<String> input) async {
-  Node? start;
   final end = Node.end();
 
   final nodes = <String, Node>{'out': end};
@@ -65,12 +59,9 @@ Future<Graph> parseInput(Stream<String> input) async {
   await for (final line in input) {
     final node = Node.fromString(line);
     nodes[node.name] = node;
-    if (node.name == 'you') {
-      start = node;
-    }
   }
 
-  return Graph(start: start!, end: end, nodes: nodes);
+  return Graph(end: end, nodes: nodes);
 }
 
 int findPaths({
@@ -110,11 +101,74 @@ final class PartOne extends IntPart {
     final graph = await parseInput(input);
 
     final result = findPaths(
-      start: graph.start,
+      start: graph['you'],
       end: graph.end,
       graph: graph,
       canReach: {},
     );
+
+    await visualProgress.update((Progress.indeterminateDone(), null));
+    return result;
+  }
+}
+
+@immutable
+final class PartTwo extends IntPart {
+  const PartTwo();
+
+  @override
+  Future<int> calculate(
+    Visualization visualization,
+    Stream<String> input,
+  ) async {
+    final visualProgress = await visualization.createProgressVisualizer();
+    final graph = await parseInput(input);
+
+    final dacToFft = findPaths(
+      start: graph['dac'],
+      end: graph['fft'],
+      graph: graph,
+      canReach: {},
+    );
+    final fftToDac = findPaths(
+      start: graph['fft'],
+      end: graph['dac'],
+      graph: graph,
+      canReach: {},
+    );
+
+    final int result;
+    if (fftToDac == 0) {
+      final startToDac = findPaths(
+        start: graph['svr'],
+        end: graph['dac'],
+        graph: graph,
+        canReach: {},
+      );
+      final fftToEnd = findPaths(
+        start: graph['fft'],
+        end: graph['out'],
+        graph: graph,
+        canReach: {},
+      );
+      result = startToDac * dacToFft * fftToEnd;
+    } else if (dacToFft == 0) {
+      final startToFft = findPaths(
+        start: graph['svr'],
+        end: graph['fft'],
+        graph: graph,
+        canReach: {},
+      );
+      final dacToEnd = findPaths(
+        start: graph['dac'],
+        end: graph['out'],
+        graph: graph,
+        canReach: {},
+      );
+      result = startToFft * fftToDac * dacToEnd;
+    } else {
+      throw ArgumentError('Did not expect cycles in input');
+    }
 
     await visualProgress.update((Progress.indeterminateDone(), null));
     return result;
