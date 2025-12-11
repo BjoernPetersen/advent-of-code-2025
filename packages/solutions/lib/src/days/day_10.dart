@@ -196,6 +196,10 @@ int findStarSolution<T>(
   required bool Function(State<T>) isValidState,
   required int Function(State<T>, State<T>) difference,
 }) {
+  final startTime = DateTime.now();
+  var lastUpdate = startTime;
+  const updateInterval = Duration(minutes: 1);
+
   final fScore = <State<T>, int>{initial: difference(target, initial)};
   final gScore = <State<T>, int>{initial: 0};
   final cameFrom = <State<T>, State<T>>{};
@@ -214,6 +218,14 @@ int findStarSolution<T>(
         initial: initial,
         target: target,
         cameFrom: cameFrom,
+      );
+    }
+
+    final now = DateTime.now();
+    if (now.difference(lastUpdate) > updateInterval) {
+      lastUpdate = now;
+      print(
+        'Looking for $target and currently at $current after ${now.difference(startTime).inMinutes} minutes',
       );
     }
 
@@ -289,13 +301,14 @@ final class PartTwo extends IntPart {
     final manuals = await input.map(MachineManual.fromString).toList();
 
     var progress = Progress(totalWork: manuals.length);
-    await visualProgress.update((progress, 'Calculating solutions'));
+    await visualProgress.update((progress, 'Calculating solutions...'));
 
     var sum = 0;
     for (final manual in manuals) {
       final initial = State.unmodifiable(
         Iterable.generate(manual.targetJoltages.length, (_) => 0),
       );
+      final start = DateTime.now();
       sum += findStarSolution(
         manual,
         initial: initial,
@@ -314,7 +327,12 @@ final class PartTwo extends IntPart {
         },
       );
 
-      await visualProgress.update((++progress, 'Calculating solutions'));
+      final end = DateTime.now();
+      progress += 1;
+      await visualProgress.update((
+        progress,
+        'Calculating solutions... Sum after #${progress.workDone}: $sum (Stage took ${end.difference(start)})',
+      ));
     }
 
     return sum;
